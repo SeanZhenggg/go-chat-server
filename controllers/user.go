@@ -1,6 +1,10 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"chat/service"
+
+	"github.com/gin-gonic/gin"
+)
 
 type IUserCtrl interface {
 	GetUserList(ctx *gin.Context)
@@ -9,7 +13,16 @@ type IUserCtrl interface {
 	PostUserRegister(ctx *gin.Context)
 }
 
+func ProvideUserCtrl(userSrv service.IUserSrv, setResponse *StandardResponse) IUserCtrl {
+	return &UserCtrl{
+		userSrv:     userSrv,
+		SetResponse: setResponse,
+	}
+}
+
 type UserCtrl struct {
+	userSrv     service.IUserSrv
+	SetResponse *StandardResponse
 }
 
 func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {

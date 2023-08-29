@@ -3,6 +3,8 @@ package main
 import (
 	// "gorm.io/driver/postgres"
 	// "gorm.io/gorm"
+	"chat/controllers"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,10 +22,17 @@ import (
 // }
 
 func main() {
-	server := gin.Default()
+	server := gin.New()
 
+	// middleware
+	server.Use(gin.Recovery())
+	var middle controllers.IResponseMiddleware = controllers.ProvideResponseMiddleware()
+	server.Use(middle.ResponseHandler)
+
+	// routes
 	server.GET("/user/all")
 	server.POST("/user/login")
 	server.POST("/user/:account")
+
 	server.Run(":8080")
 }
