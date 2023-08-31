@@ -42,7 +42,7 @@ func (repo *userRepo) GetUser(cond *po.UserCond) (*po.User, error) {
 
 func (repo *userRepo) UserRegister(data *po.UserRegData) error {
 
-	if err := repo.db.Model(&po.User{}).Create(data).Error; err != nil {
+	if err := repo.db.Model(&po.UserRegData{}).Create(data).Error; err != nil {
 		return xerrors.Errorf("userRepo GetUser error ! : %w", err)
 	}
 

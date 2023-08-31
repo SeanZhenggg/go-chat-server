@@ -14,7 +14,7 @@ type Controller struct {
 	UserCtrl IUserCtrl
 }
 
-func ProvideController(userCtrl IUserCtrl) *Controller {
+func ProvideControllers(userCtrl IUserCtrl) *Controller {
 	return &Controller{
 		UserCtrl: userCtrl,
 	}

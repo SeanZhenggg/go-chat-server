@@ -17,6 +17,10 @@ func (User) TableName() string {
 	return "users"
 }
 
+func (UserRegData) TableName() string {
+	return "users"
+}
+
 type UserCond struct {
 	Account string
 }
@@ -25,4 +29,6 @@ type UserRegData struct {
 	Account  string
 	Password string
 	Nickname string
+	CreateAt time.Time `gorm:"column:create_at;autoCreateTime"`
+	UpdateAt time.Time `gorm:"column:update_at;autoUpdateTime"`
 }

@@ -4,7 +4,7 @@ type Service struct {
 	UserSrv IUserSrv
 }
 
-func ProvideService(
+func ProvideServices(
 	userSrv IUserSrv,
 ) *Service {
 	return &Service{
