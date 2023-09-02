@@ -52,15 +52,18 @@ func main() {
 	stdResp := &controllers.StandardResponse{}
 	iUserRepo := repository.ProvideUserRepo(db)
 	iUserSrv := service.ProvideUserSrv(iUserRepo)
-	iServices := service.ProvideServices(iUserSrv)
+	iHubSrv := service.ProvideHubSrv()
+	iServices := service.ProvideServices(iUserSrv, iHubSrv)
 	iUserCtrl := controllers.ProvideUserCtrl(iServices.UserSrv, stdResp)
-	iCtrls := controllers.ProvideControllers(iUserCtrl)
+	iChatCtrl := controllers.ProvideChatCtrl(iServices.HubSrv, iServices.UserSrv)
+	iCtrls := controllers.ProvideControllers(iUserCtrl, iChatCtrl)
 
 	// routes
 	server.GET("/api/user/all", iCtrls.UserCtrl.GetUserList)
 	server.GET("/api/user/:account", iCtrls.UserCtrl.GetUser)
 	server.POST("/api/user/login", iCtrls.UserCtrl.PostUserLogin)
 	server.POST("/api/user", iCtrls.UserCtrl.PostUserRegister)
+	server.GET("/websocket", iCtrls.ChatCtrl.Conn)
 
 	server.Run(":8080")
 }

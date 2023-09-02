@@ -19,3 +19,12 @@ type UserRegDto struct {
 	Password string `json:"password"`
 	Nickname string `json:"nickname"`
 }
+
+type UserLoginDto struct {
+	Account  string `json:"account"`
+	Password string `json:"password"`
+}
+
+type UserLoginRespDto struct {
+	Token string `json:"token"`
+}

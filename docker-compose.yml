@@ -5,5 +5,7 @@ services:
     restart: always
     environment:
       POSTGRES_PASSWORD: postgrespw
+    volumes:
+      - ./postgresql:/docker-entrypoint-initdb.d
     ports:
     - 55000:5432

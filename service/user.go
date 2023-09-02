@@ -1,13 +1,13 @@
 package service
 
 import (
-	"chat/model/bo"
-	"chat/model/po"
-
-	"chat/repository"
-
 	"github.com/gin-gonic/gin"
 	"golang.org/x/xerrors"
+
+	"chat/model/bo"
+	"chat/model/po"
+	"chat/repository"
+	"chat/utils/auth"
 )
 
 type IUserSrv interface {
@@ -72,8 +72,26 @@ func (srv *userService) GetUser(ctx *gin.Context, cond *bo.UserCond) (*bo.UserIn
 }
 
 func (srv *userService) UserLogin(ctx *gin.Context, data *bo.UserLoginData) (*bo.UserLoginResp, error) {
+	poUserLogin := &po.UserLoginData{
+		Account:  data.Account,
+		Password: data.Password,
+	}
 
-	return &bo.UserLoginResp{}, nil
+	loggedinUser, err := srv.userRepo.UserLogin(poUserLogin)
+	if err != nil {
+		return nil, xerrors.Errorf("userService UserLogin error! : %w", err)
+	}
+
+	token, err := auth.TokenGenerate(loggedinUser.Account)
+	if err != nil {
+		return nil, xerrors.Errorf("userService UserLogin TokenGenerate error! : %w", err)
+	}
+
+	userLoginResp := &bo.UserLoginResp{
+		Token: token,
+	}
+
+	return userLoginResp, nil
 }
 
 func (srv *userService) UserRegister(ctx *gin.Context, data *bo.UserRegData) error {

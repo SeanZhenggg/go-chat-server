@@ -78,7 +78,29 @@ func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
 }
 
 func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
+	dtoUserLogin := &dto.UserLoginDto{}
 
+	if err := ctx.BindJSON(dtoUserLogin); err != nil {
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, "參數錯誤")
+		return
+	}
+
+	boUserLogin := &bo.UserLoginData{
+		Account:  dtoUserLogin.Account,
+		Password: dtoUserLogin.Password,
+	}
+
+	boUserLoginResp, err := ctrl.userSrv.UserLogin(ctx, boUserLogin)
+	if err != nil {
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	dtoUserLoginResp := &dto.UserLoginRespDto{
+		Token: boUserLoginResp.Token,
+	}
+
+	ctrl.SetResponse.SetStandardResponse(ctx, http.StatusOK, dtoUserLoginResp)
 }
 
 func (ctrl *UserCtrl) PostUserRegister(ctx *gin.Context) {

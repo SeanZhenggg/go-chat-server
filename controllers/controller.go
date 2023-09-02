@@ -12,11 +12,13 @@ const (
 
 type Controller struct {
 	UserCtrl IUserCtrl
+	ChatCtrl IChatCtrl
 }
 
-func ProvideControllers(userCtrl IUserCtrl) *Controller {
+func ProvideControllers(userCtrl IUserCtrl, chatCtrl IChatCtrl) *Controller {
 	return &Controller{
 		UserCtrl: userCtrl,
+		ChatCtrl: chatCtrl,
 	}
 }
 
