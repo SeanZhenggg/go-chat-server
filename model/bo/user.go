@@ -3,29 +3,33 @@ package bo
 import "time"
 
 type UserCond struct {
-	Account string `json:"account"`
+	Account string
 }
 
 type UserLoginData struct {
-	Account  string `json:"account"`
-	Password string `json:"password"`
+	Account  string
+	Password string
 }
 
 type UserRegData struct {
-	Account  string `json:"account"`
-	Password string `json:"password"`
-	Nickname string `json:"nickname"`
+	Account  string
+	Password string
+	Nickname string
 }
 
 type UserInfo struct {
-	Id       uint      `json:"id"`
-	Account  string    `json:"account"`
-	Password string    `json:"password"`
-	Nickname string    `json:"nickname"`
-	CreateAt time.Time `json:"create_at"`
-	UpdateAt time.Time `json:"update_at"`
+	Id       uint
+	Account  string
+	Password string
+	Nickname string
+	CreateAt time.Time
+	UpdateAt time.Time
 }
 
 type UserLoginResp struct {
-	Token string `json:"token"`
+	Token string
+}
+
+type UserValidateCond struct {
+	Token string
 }

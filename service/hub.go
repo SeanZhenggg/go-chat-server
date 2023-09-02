@@ -12,6 +12,7 @@ import (
 type IHubSrv interface {
 	ClientChange(data *bo.ClientState)
 	BroadCastMsg(data *bo.BroadcastState)
+	GetRoomOrCreateIfNotExisted(roomId bo.RoomId) map[*bo.Client]struct{}
 }
 
 func ProvideHubSrv() IHubSrv {
@@ -63,17 +64,27 @@ func (srv *hubService) updateClient(data *bo.ClientState) {
 
 	srv.updateRoom(&bo.RoomState{
 		Client: data.Client,
-		RoomId: data.RoomId,
 		IsJoin: data.IsRegister,
+		RoomId: data.Client.RoomId,
 	})
 }
 
-func (srv *hubService) updateRoom(data *bo.RoomState) {
-	room, isExist := srv.rooms[data.RoomId]
+func (srv *hubService) GetRoomOrCreateIfNotExisted(roomId bo.RoomId) map[*bo.Client]struct{} {
+	return srv.getRoomOrCreateIfNotExisted(roomId)
+}
+
+func (srv *hubService) getRoomOrCreateIfNotExisted(roomId bo.RoomId) map[*bo.Client]struct{} {
+	room, isExist := srv.rooms[roomId]
 	if !isExist {
-		srv.rooms[data.RoomId] = make(map[*bo.Client]struct{}, 1024)
-		room = srv.rooms[data.RoomId]
+		srv.rooms[roomId] = make(map[*bo.Client]struct{}, 1024)
+		room = srv.rooms[roomId]
 	}
+
+	return room
+}
+
+func (srv *hubService) updateRoom(data *bo.RoomState) {
+	room := srv.getRoomOrCreateIfNotExisted(data.RoomId)
 
 	switch data.IsJoin {
 	case constants.RoomClientState_Join:

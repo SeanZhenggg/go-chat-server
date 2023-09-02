@@ -15,6 +15,7 @@ type IUserSrv interface {
 	GetUser(ctx *gin.Context, cond *bo.UserCond) (*bo.UserInfo, error)
 	UserLogin(ctx *gin.Context, data *bo.UserLoginData) (*bo.UserLoginResp, error)
 	UserRegister(ctx *gin.Context, data *bo.UserRegData) error
+	ValidateUser(data *bo.UserValidateCond) (*bo.UserInfo, error)
 }
 
 func ProvideUserSrv(userRepo repository.IUserRepo) IUserSrv {
@@ -106,4 +107,29 @@ func (srv *userService) UserRegister(ctx *gin.Context, data *bo.UserRegData) err
 	}
 
 	return nil
+}
+
+func (srv *userService) ValidateUser(data *bo.UserValidateCond) (*bo.UserInfo, error) {
+	userAccount, err := auth.TokenValidation(data.Token)
+	if err != nil {
+		return nil, xerrors.Errorf("userService ValidateUser TokenValidation error! : %w", err)
+	}
+
+	poUser, err := srv.userRepo.GetUser(&po.UserCond{
+		Account: userAccount,
+	})
+	if err != nil {
+		return nil, xerrors.Errorf("userService ValidateUser GetUser error! : %w", err)
+	}
+
+	user := &bo.UserInfo{
+		Id:       poUser.Id,
+		Account:  poUser.Account,
+		Password: poUser.Password,
+		Nickname: poUser.Nickname,
+		CreateAt: poUser.CreateAt,
+		UpdateAt: poUser.UpdateAt,
+	}
+
+	return user, nil
 }

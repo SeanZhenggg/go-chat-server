@@ -34,8 +34,28 @@ func (*MyError) Error() string {
 	return "error!!!"
 }
 
+func setApiRoutes(g *gin.Engine, ctrl *controllers.Controller, middleware controllers.IResponseMiddleware) {
+	group := g.Group("/api")
+
+	// middleware
+	group.Use(middleware.ResponseHandler)
+	group.Use(gin.Recovery())
+
+	group.GET("/user/all", ctrl.UserCtrl.GetUserList)
+	group.GET("/user/:account", ctrl.UserCtrl.GetUser)
+	group.POST("/user/login", ctrl.UserCtrl.PostUserLogin)
+	group.POST("/user", ctrl.UserCtrl.PostUserRegister)
+}
+
+func setWsRoutes(g *gin.Engine, ctrl *controllers.Controller) {
+	group := g.Group("/websocket")
+	group.Use(gin.Recovery())
+
+	group.GET("", ctrl.ChatCtrl.Conn)
+}
+
 func main() {
-	// db
+	// db init
 	db, err := Init()
 	if err != nil {
 		panic(err)
@@ -43,27 +63,19 @@ func main() {
 
 	server := gin.New()
 
-	// middleware
-	server.Use(gin.Recovery())
-	var middle controllers.IResponseMiddleware = controllers.ProvideResponseMiddleware()
-	server.Use(middle.ResponseHandler)
-
 	// dependency injection
+	iMiddleware := controllers.ProvideResponseMiddleware()
 	stdResp := &controllers.StandardResponse{}
 	iUserRepo := repository.ProvideUserRepo(db)
 	iUserSrv := service.ProvideUserSrv(iUserRepo)
 	iHubSrv := service.ProvideHubSrv()
-	iServices := service.ProvideServices(iUserSrv, iHubSrv)
-	iUserCtrl := controllers.ProvideUserCtrl(iServices.UserSrv, stdResp)
-	iChatCtrl := controllers.ProvideChatCtrl(iServices.HubSrv, iServices.UserSrv)
+	iUserCtrl := controllers.ProvideUserCtrl(iUserSrv, stdResp)
+	iChatCtrl := controllers.ProvideChatCtrl(iHubSrv, iUserSrv)
 	iCtrls := controllers.ProvideControllers(iUserCtrl, iChatCtrl)
 
 	// routes
-	server.GET("/api/user/all", iCtrls.UserCtrl.GetUserList)
-	server.GET("/api/user/:account", iCtrls.UserCtrl.GetUser)
-	server.POST("/api/user/login", iCtrls.UserCtrl.PostUserLogin)
-	server.POST("/api/user", iCtrls.UserCtrl.PostUserRegister)
-	server.GET("/websocket", iCtrls.ChatCtrl.Conn)
+	setApiRoutes(server, iCtrls, iMiddleware)
+	setWsRoutes(server, iCtrls)
 
 	server.Run(":8080")
 }

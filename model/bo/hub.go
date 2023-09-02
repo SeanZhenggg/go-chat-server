@@ -10,13 +10,13 @@ type Room map[string]map[*Client]struct{}
 
 type Client struct {
 	Conn     *websocket.Conn
-	UserInfo UserInfo
+	UserInfo *UserInfo
+	RoomId   RoomId
 }
 
 type ClientState struct {
 	IsRegister bool
 	Client     *Client
-	RoomId     RoomId
 }
 
 type RoomState struct {
