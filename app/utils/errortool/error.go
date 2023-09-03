@@ -1,6 +1,9 @@
 package errortool
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 func UnwrapErrors(err error) (error, bool) {
 	newError := err
@@ -17,4 +20,23 @@ func UnwrapErrors(err error) (error, bool) {
 	} else {
 		return nil, false
 	}
+}
+
+type CustomError struct {
+	code      int
+	baseCode  int
+	groupCode int
+	message   string
+}
+
+func (e *CustomError) Error() string {
+	return fmt.Sprint(e.code) + ":" + e.message
+}
+
+func (e *CustomError) GetCode() int {
+	return e.code
+}
+
+func (e *CustomError) GetMessage() string {
+	return e.message
 }
