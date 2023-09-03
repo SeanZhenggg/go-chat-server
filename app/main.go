@@ -4,11 +4,10 @@ import (
 	"chat/app/controllers"
 	"chat/app/repository"
 	"chat/app/service"
+	"chat/app/utils/logger"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,8 +21,6 @@ func Init() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("connection success!!!")
 
 	return db, nil
 }
@@ -55,9 +52,13 @@ func setWsRoutes(g *gin.Engine, ctrl *controllers.Controller) {
 }
 
 func main() {
+	// dependency injection
+	iLogger := logger.ProviderLogger()
+
 	// db init
 	db, err := Init()
 	if err != nil {
+		iLogger.Error(err)
 		panic(err)
 	}
 
@@ -68,9 +69,9 @@ func main() {
 	stdResp := &controllers.StandardResponse{}
 	iUserRepo := repository.ProvideUserRepo(db)
 	iUserSrv := service.ProvideUserSrv(iUserRepo)
-	iHubSrv := service.ProvideHubSrv()
+	iHubSrv := service.ProvideHubSrv(iLogger)
 	iUserCtrl := controllers.ProvideUserCtrl(iUserSrv, stdResp)
-	iChatCtrl := controllers.ProvideChatCtrl(iHubSrv, iUserSrv)
+	iChatCtrl := controllers.ProvideChatCtrl(iHubSrv, iUserSrv, iLogger)
 	iCtrls := controllers.ProvideControllers(iUserCtrl, iChatCtrl)
 
 	// routes

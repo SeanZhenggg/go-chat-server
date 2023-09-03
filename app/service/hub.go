@@ -3,10 +3,11 @@ package service
 import (
 	"chat/app/constants"
 	"chat/app/model/bo"
-	"fmt"
+	"chat/app/utils/logger"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"golang.org/x/xerrors"
 )
 
 type IHubSrv interface {
@@ -15,12 +16,13 @@ type IHubSrv interface {
 	GetRoomOrCreateIfNotExisted(roomId bo.RoomId) map[*bo.Client]struct{}
 }
 
-func ProvideHubSrv() IHubSrv {
+func ProvideHubSrv(logger logger.ILogger) IHubSrv {
 	obj := &hubService{
 		clients:       make(map[*bo.Client]struct{}),
 		rooms:         make(map[bo.RoomId]map[*bo.Client]struct{}, 100),
 		clientChan:    make(chan *bo.ClientState, 256),
 		broadcastChan: make(chan *bo.BroadcastState, 256),
+		logger:        logger,
 	}
 
 	go obj.run()
@@ -33,6 +35,7 @@ type hubService struct {
 	rooms         map[bo.RoomId]map[*bo.Client]struct{}
 	clientChan    chan *bo.ClientState
 	broadcastChan chan *bo.BroadcastState
+	logger        logger.ILogger
 }
 
 func (srv *hubService) run() {
@@ -107,22 +110,22 @@ func (srv *hubService) broadcastMsg(data *bo.BroadcastState) {
 
 	for client := range room {
 		if err := client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
-			fmt.Printf("🍎🍎🍎🍎🍎🍎 broadcastMsg SetWriteDeadline error : %v\n", err)
+			srv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
 			continue
 		}
 
 		w, err := client.Conn.NextWriter(websocket.TextMessage)
 		if err != nil {
-			fmt.Printf("🍎🍎🍎🍎🍎🍎 broadcastMsg NextWriter error : %v\n", err)
+			srv.logger.Error(xerrors.Errorf("broadcastMsg NextWriter error : %w", err))
 			continue
 		}
 
 		if _, err := w.Write(data.Message); err != nil {
-			fmt.Printf("🍎🍎🍎🍎🍎🍎 broadcastMsg Write error : %v\n", err)
+			srv.logger.Error(xerrors.Errorf("broadcastMsg Write error : %w", err))
 		}
 
 		if err := w.Close(); err != nil {
-			fmt.Printf("🍎🍎🍎🍎🍎🍎 broadcastMsg Close error : %v\n", err)
+			srv.logger.Error(xerrors.Errorf("broadcastMsg Close error : %w", err))
 		}
 	}
 }
@@ -130,7 +133,7 @@ func (srv *hubService) broadcastMsg(data *bo.BroadcastState) {
 func (srv *hubService) getRoom(roomId bo.RoomId) map[*bo.Client]struct{} {
 	room, ok := srv.rooms[roomId]
 	if !ok {
-		fmt.Println("🍎🍎🍎🍎🍎🍎", "no room found with : ", roomId)
+		srv.logger.Error(xerrors.Errorf("getRoom no room found : %v", roomId))
 		return nil
 	}
 

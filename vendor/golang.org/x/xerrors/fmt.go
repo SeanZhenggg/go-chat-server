@@ -131,8 +131,6 @@ func parsePercentW(format string) (idx int, newFormat string, ok bool) {
 		}
 		n++
 	}
-
-	fmt.Println("idx, format, ok", idx, format, ok)
 	return idx, format, ok
 }
 
@@ -144,7 +142,6 @@ func parsePrintfVerb(s string) (int, bool) {
 	var r rune
 	for i := 1; i < len(s); i += sz {
 		r, sz = utf8.DecodeRuneInString(s[i:])
-		fmt.Println("r, sz", r, sz)
 		if unicode.IsLetter(r) {
 			return i + sz, r == 'w'
 		}

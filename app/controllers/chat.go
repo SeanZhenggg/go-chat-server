@@ -5,47 +5,48 @@ import (
 	"chat/app/model/bo"
 	"chat/app/model/dto"
 	"chat/app/service"
-	"fmt"
-
-	// "time"
+	"chat/app/utils/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"golang.org/x/xerrors"
 )
 
 type IChatCtrl interface {
 	Conn(ctx *gin.Context)
 }
 
-func ProvideChatCtrl(hubSrv service.IHubSrv, userSrv service.IUserSrv) IChatCtrl {
+func ProvideChatCtrl(hubSrv service.IHubSrv, userSrv service.IUserSrv, logger logger.ILogger) IChatCtrl {
 	return &ChatCtrl{
 		hubSrv:  hubSrv,
 		userSrv: userSrv,
+		logger:  logger,
 	}
 }
 
 type ChatCtrl struct {
 	hubSrv  service.IHubSrv
 	userSrv service.IUserSrv
+	logger  logger.ILogger
 }
 
 func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 	chatQueryDto := &dto.ChatQueryDto{}
 	if err := ctx.BindQuery(chatQueryDto); err != nil {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 Conn BindQuery error : %v\n", err)
+		ctrl.logger.Error(xerrors.Errorf("Conn BindQuery error : %w", err))
 		return
 	}
 
-	boUserInfo, err := ctrl.userSrv.ValidateUser(&bo.UserValidateCond{chatQueryDto.Token})
+	boUserInfo, err := ctrl.userSrv.ValidateUser(&bo.UserValidateCond{Token: chatQueryDto.Token})
 	if err != nil || boUserInfo.Account != chatQueryDto.Account {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 Conn ValidateUser error : %v\n", err)
+		ctrl.logger.Error(xerrors.Errorf("Conn ValidateUser error : %w", err))
 		return
 	}
 
 	conn, err := ctrl.defaultUpgrade().Upgrade(ctx.Writer, ctx.Request, nil)
 
 	if err != nil {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 Conn websocket connection error : %v\n", err)
+		ctrl.logger.Error(xerrors.Errorf("Conn Websocket Connection error : %w", err))
 		return
 	}
 
@@ -87,7 +88,7 @@ func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 		_, message, err := cli.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("🍎🍎🍎🍎🍎🍎 readPump IsUnexpectedCloseError error : %v\n", err)
+				ctrl.logger.Error(xerrors.Errorf("readPump IsUnexpectedCloseError error : %w", err))
 			}
 			break
 		}

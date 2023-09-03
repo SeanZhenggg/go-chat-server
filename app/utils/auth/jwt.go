@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -35,7 +34,6 @@ func TokenGenerate(account string) (string, error) {
 
 	token, err := tokenClaims.SignedString(SECRET_KEY)
 	if err != nil {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 jwt TokenGenerate error : %v \n", err)
 		return "", err
 	}
 
@@ -48,19 +46,12 @@ func TokenValidation(token string) (string, error) {
 	})
 
 	if err != nil {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 jwt TokenValidation error : %v \n", err)
 		return "", err
 	}
 
 	claims, ok := tokenClaims.Claims.(*Claims)
 
-	if !ok {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 jwt claims error : cannot parse claims")
-		return "", err
-	}
-
-	if claims.Account == "" {
-		fmt.Printf("🍎🍎🍎🍎🍎🍎 jwt claims error : no required Account value")
+	if !ok || claims.Account == "" {
 		return "", err
 	}
 
