@@ -8,7 +8,9 @@ type IGroupRepo interface {
 }
 
 func ProvideGroupRepo() IGroupRepo {
-	return &groupRepo{}
+	return &groupRepo{
+		store: make(map[int]struct{}, 256),
+	}
 }
 
 type groupRepo struct {

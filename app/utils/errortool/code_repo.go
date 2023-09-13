@@ -8,7 +8,9 @@ type ICodeRepo interface {
 }
 
 func ProvideCodeRepo() ICodeRepo {
-	return &codeRepo{}
+	return &codeRepo{
+		store: make(map[int]*CustomError, 256),
+	}
 }
 
 type codeRepo struct {

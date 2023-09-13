@@ -1,11 +1,11 @@
 package repository
 
 import (
+	"chat/app/database"
 	"chat/app/model/po"
 	"chat/app/utils/errortool"
 
 	"golang.org/x/xerrors"
-	"gorm.io/gorm"
 )
 
 type IUserRepo interface {
@@ -16,17 +16,18 @@ type IUserRepo interface {
 }
 
 type userRepo struct {
-	db *gorm.DB
+	db database.IPostgresDB
 }
 
-func ProvideUserRepo(db *gorm.DB) IUserRepo {
+func ProvideUserRepo(db database.IPostgresDB) IUserRepo {
 	return &userRepo{db}
 }
 
 func (repo *userRepo) GetUserList() ([]*po.User, error) {
 	userList := make([]*po.User, 0)
 
-	if err := repo.db.Model(&po.User{}).Find(&userList).Error; err != nil {
+	db := repo.db.Session()
+	if err := db.Model(&po.User{}).Find(&userList).Error; err != nil {
 		return nil, xerrors.Errorf("userRepo GetUserList error ! : %w", errortool.ParseDBError(err))
 	}
 
@@ -35,7 +36,9 @@ func (repo *userRepo) GetUserList() ([]*po.User, error) {
 
 func (repo *userRepo) GetUser(cond *po.UserCond) (*po.User, error) {
 	user := &po.User{}
-	if err := repo.db.Model(&po.User{}).Where("account = ?", cond.Account).First(user).Error; err != nil {
+
+	db := repo.db.Session()
+	if err := db.Model(&po.User{}).Where("account = ?", cond.Account).First(user).Error; err != nil {
 		return nil, xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
 	}
 
@@ -43,7 +46,8 @@ func (repo *userRepo) GetUser(cond *po.UserCond) (*po.User, error) {
 }
 
 func (repo *userRepo) UserRegister(cond *po.UserRegData) error {
-	if err := repo.db.Model(&po.User{}).
+	db := repo.db.Session()
+	if err := db.Model(&po.User{}).
 		Create(&po.User{Account: cond.Account, Password: cond.Password, Nickname: cond.Nickname}).
 		Error; err != nil {
 		return xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
@@ -54,7 +58,9 @@ func (repo *userRepo) UserRegister(cond *po.UserRegData) error {
 
 func (repo *userRepo) UserLogin(cond *po.UserLoginData) (*po.User, error) {
 	user := &po.User{}
-	if err := repo.db.Model(&po.User{}).
+
+	db := repo.db.Session()
+	if err := db.Model(&po.User{}).
 		Where(&po.User{Account: cond.Account, Password: cond.Password}).
 		First(user).Error; err != nil {
 		return nil, xerrors.Errorf("userRepo UserLogin error ! : %w", errortool.ParseDBError(err))

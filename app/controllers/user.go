@@ -17,10 +17,9 @@ type IUserCtrl interface {
 	PostUserRegister(ctx *gin.Context)
 }
 
-func ProvideUserCtrl(userSrv service.IUserSrv, setResponse *StandardResponse) IUserCtrl {
+func ProvideUserCtrl(userSrv service.IUserSrv) IUserCtrl {
 	return &UserCtrl{
-		userSrv:     userSrv,
-		SetResponse: setResponse,
+		userSrv: userSrv,
 	}
 }
 

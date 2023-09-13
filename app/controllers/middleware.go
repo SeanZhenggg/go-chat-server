@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"chat/app/utils/errortool"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -35,14 +34,15 @@ func (respMw *ResponseMiddleware) generateStandardResponse(ctx *gin.Context) res
 
 	if status >= http.StatusBadRequest {
 		if err, ok := data.(error); ok {
-			if parsed, ok := errortool.UnwrapErrors(err); ok {
-				code = 1234
-				message = fmt.Sprintf("%v", parsed)
+			if parsed, ok := errortool.ParseError(err); ok {
+				code = parsed.GetCode()
+				message = parsed.GetMessage()
 				data = nil
 			}
 		} else {
-			code = 1005
-			message = "unknown error"
+			err, _ := errortool.ParseError(errortool.ReqErr.UnknownError)
+			code = err.GetCode()
+			message = err.GetMessage()
 			data = nil
 		}
 	}

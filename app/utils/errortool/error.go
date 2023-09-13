@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func UnwrapErrors(err error) (error, bool) {
+func ParseError(err error) (*CustomError, bool) {
 	newError := err
 	for {
 		if tmp := errors.Unwrap(newError); tmp != nil {
@@ -15,7 +15,7 @@ func UnwrapErrors(err error) (error, bool) {
 		}
 	}
 
-	if parsed, ok := newError.(error); ok {
+	if parsed, ok := newError.(*CustomError); ok {
 		return parsed, true
 	} else {
 		return nil, false

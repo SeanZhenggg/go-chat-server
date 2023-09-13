@@ -50,12 +50,14 @@ func (e *errorGroup) GenError(code int, message string) error {
 		log.Panicf("errorGroup error: code max than 999, code: %d", code)
 	}
 
+	errCode := e.makeCode(code)
 	err := &CustomError{
-		code:      e.makeCode(code),
+		code:      errCode,
 		baseCode:  code,
 		groupCode: e.group,
+		message:   message,
 	}
-	e.codes.Add(code, err)
+	e.codes.Add(errCode, err)
 
 	return err
 }
