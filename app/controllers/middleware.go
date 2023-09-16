@@ -37,12 +37,11 @@ func (respMw *ResponseMiddleware) generateStandardResponse(ctx *gin.Context) res
 			if parsed, ok := errortool.ParseError(err); ok {
 				code = parsed.GetCode()
 				message = parsed.GetMessage()
-				data = nil
+			} else {
+				err, _ := errortool.ParseError(errortool.ReqErr.UnknownError)
+				code = err.GetCode()
+				message = err.GetMessage()
 			}
-		} else {
-			err, _ := errortool.ParseError(errortool.ReqErr.UnknownError)
-			code = err.GetCode()
-			message = err.GetMessage()
 			data = nil
 		}
 	}
