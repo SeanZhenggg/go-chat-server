@@ -27,14 +27,13 @@ type userService struct {
 }
 
 func (srv *userService) GetUserList(ctx *gin.Context) ([]*bo.UserInfo, error) {
-	users := make([]*bo.UserInfo, 0)
-
 	poUserList, err := srv.userRepo.GetUserList()
 
 	if err != nil {
 		return nil, xerrors.Errorf("userService GetUserList error! : %w", err)
 	}
 
+	users := make([]*bo.UserInfo, len(poUserList))
 	for _, poUser := range poUserList {
 		users = append(users, &bo.UserInfo{
 			Id:       poUser.Id,
