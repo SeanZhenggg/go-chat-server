@@ -34,15 +34,15 @@ func (srv *userService) GetUserList(ctx *gin.Context) ([]*bo.UserInfo, error) {
 	}
 
 	users := make([]*bo.UserInfo, len(poUserList))
-	for _, poUser := range poUserList {
-		users = append(users, &bo.UserInfo{
+	for i, poUser := range poUserList {
+		users[i] = &bo.UserInfo{
 			Id:       poUser.Id,
 			Account:  poUser.Account,
 			Password: poUser.Password,
 			Nickname: poUser.Nickname,
 			CreateAt: poUser.CreateAt,
 			UpdateAt: poUser.UpdateAt,
-		})
+		}
 	}
 
 	return users, nil
