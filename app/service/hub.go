@@ -4,6 +4,7 @@ import (
 	"chat/app/constants"
 	"chat/app/model/bo"
 	"chat/app/utils/logger"
+	"fmt"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -65,6 +66,12 @@ func (srv *hubService) updateClient(data *bo.ClientState) {
 		delete(srv.clients, data.Client)
 	}
 
+	fmt.Println("🍎🍎🍎🍎🍎🍎 -----clients now-----")
+	for client := range srv.clients {
+		fmt.Printf("🍎🍎🍎🍎🍎🍎 %v \n", client.UserInfo.Account)
+	}
+	fmt.Println("🍎🍎🍎🍎🍎🍎 -----clients now-----")
+
 	srv.updateRoom(&bo.RoomState{
 		Client: data.Client,
 		IsJoin: data.IsRegister,
@@ -100,6 +107,15 @@ func (srv *hubService) updateRoom(data *bo.RoomState) {
 			delete(srv.rooms, data.RoomId)
 		}
 	}
+
+	fmt.Println("🍎🍎🍎🍎🍎🍎 -----rooms now-----")
+	for id, room := range srv.rooms {
+		fmt.Printf("🍎🍎🍎🍎🍎🍎 room id : %v\n", id)
+		for client := range room {
+			fmt.Printf("🍎🍎🍎🍎🍎🍎 Client %v join Room!!!\n", client.UserInfo.Account)
+		}
+	}
+	fmt.Println("🍎🍎🍎🍎🍎🍎 -----rooms now-----")
 }
 
 func (srv *hubService) broadcastMsg(data *bo.BroadcastState) {
@@ -109,24 +125,29 @@ func (srv *hubService) broadcastMsg(data *bo.BroadcastState) {
 	}
 
 	for client := range room {
-		if err := client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
-			srv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
-			continue
-		}
+		srv.writeMsg(client, data)
+	}
+}
 
-		w, err := client.Conn.NextWriter(websocket.TextMessage)
-		if err != nil {
-			srv.logger.Error(xerrors.Errorf("broadcastMsg NextWriter error : %w", err))
-			continue
-		}
+func (srv *hubService) writeMsg(client *bo.Client, data *bo.BroadcastState) {
+	client.Mu.Lock()
+	defer client.Mu.Unlock()
 
-		if _, err := w.Write(data.Message); err != nil {
-			srv.logger.Error(xerrors.Errorf("broadcastMsg Write error : %w", err))
-		}
+	if err := client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
+		srv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
+		return
+	}
 
-		if err := w.Close(); err != nil {
-			srv.logger.Error(xerrors.Errorf("broadcastMsg Close error : %w", err))
-		}
+	w, err := client.Conn.NextWriter(websocket.TextMessage)
+	if err != nil {
+		srv.logger.Error(xerrors.Errorf("broadcastMsg NextWriter error : %w", err))
+		return
+	}
+	defer w.Close()
+
+	if _, err := w.Write(data.Message); err != nil {
+		srv.logger.Error(xerrors.Errorf("broadcastMsg Write error : %w", err))
+		return
 	}
 }
 

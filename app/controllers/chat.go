@@ -6,6 +6,7 @@ import (
 	"chat/app/model/dto"
 	"chat/app/service"
 	"chat/app/utils/logger"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -37,10 +38,20 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 		return
 	}
 
-	boUserInfo, err := ctrl.userSrv.ValidateUser(&bo.UserValidateCond{Token: chatQueryDto.Token})
-	if err != nil || chatQueryDto.Account != boUserInfo.Account {
-		ctrl.logger.Error(xerrors.Errorf("Conn ValidateUser error : %w", err))
-		return
+	// user login validation
+	// boUserInfo, err := ctrl.userSrv.ValidateUser(&bo.UserValidateCond{Token: chatQueryDto.Token})
+	// if err != nil || chatQueryDto.Account != boUserInfo.Account {
+	// 	ctrl.logger.Error(xerrors.Errorf("Conn ValidateUser error : %w", err))
+	// 	return
+	// }
+
+	boUserInfo := &bo.UserInfo{
+		Id:       0,
+		Account:  chatQueryDto.Account,
+		Password: "test1234",
+		Nickname: chatQueryDto.Account,
+		CreateAt: time.Now(),
+		UpdateAt: time.Now(),
 	}
 
 	conn, err := ctrl.defaultUpgrade().Upgrade(ctx.Writer, ctx.Request, nil)
@@ -79,6 +90,10 @@ func (ctrl *ChatCtrl) defaultUpgrade() *websocket.Upgrader {
 
 func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 	defer func() {
+		ctrl.hubSrv.ClientChange(&bo.ClientState{
+			Client:     cli,
+			IsRegister: constants.ClientState_UnRegistered,
+		})
 		cli.Conn.Close()
 	}()
 
