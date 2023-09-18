@@ -6,6 +6,6 @@ services:
     environment:
       POSTGRES_PASSWORD: postgrespw
     volumes:
-      - ./postgresql:/docker-entrypoint-initdb.d
+      - ./app/postgresql:/docker-entrypoint-initdb.d
     ports:
     - 55000:5432
