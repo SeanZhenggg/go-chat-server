@@ -33,11 +33,11 @@ func createClient(query string) {
 	// u := url.URL{Scheme: "ws", Host: *addr, Path: "/websocket"}
 	log.Printf("connecting to %s", u.String())
 
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	c, err := connectWS(u.String())
 	if err != nil {
 		log.Fatal("dial:", err)
+		return
 	}
-	defer c.Close()
 
 	done := make(chan struct{})
 
@@ -53,7 +53,7 @@ func createClient(query string) {
 		}
 	}()
 
-	ticker := time.NewTicker(time.Millisecond * 300)
+	ticker := time.NewTicker(time.Millisecond * 1000)
 	defer ticker.Stop()
 
 	for {
@@ -83,4 +83,34 @@ func createClient(query string) {
 			return
 		}
 	}
+}
+
+func _connection(url string) (*websocket.Conn, error) {
+	c, _, err := websocket.DefaultDialer.Dial(url, nil)
+
+	if err != nil {
+		log.Printf("connection error : %v", err)
+		fmt.Printf("c : %v", c)
+
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func connectWS(url string) (*websocket.Conn, error) {
+	var c *websocket.Conn
+	var err error
+
+	for count := 0; count < 5; count++ {
+		c, err = _connection(url)
+		if err == nil {
+			return c, nil
+		}
+		time.After(1 * time.Second)
+	}
+
+	log.Printf("connection failed after 5 times...")
+
+	return nil, err
 }

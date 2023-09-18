@@ -5,6 +5,7 @@ import (
 	"chat/app/model/bo"
 	"chat/app/utils/logger"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -37,6 +38,7 @@ type hubService struct {
 	clientChan    chan *bo.ClientState
 	broadcastChan chan *bo.BroadcastState
 	logger        logger.ILogger
+	mu            sync.Mutex
 }
 
 func (srv *hubService) run() {
@@ -119,6 +121,9 @@ func (srv *hubService) updateRoom(data *bo.RoomState) {
 }
 
 func (srv *hubService) broadcastMsg(data *bo.BroadcastState) {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+
 	room := srv.getRoom(data.RoomId)
 	if room == nil {
 		return
@@ -130,9 +135,6 @@ func (srv *hubService) broadcastMsg(data *bo.BroadcastState) {
 }
 
 func (srv *hubService) writeMsg(client *bo.Client, data *bo.BroadcastState) {
-	client.Mu.Lock()
-	defer client.Mu.Unlock()
-
 	if err := client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
 		srv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
 		return

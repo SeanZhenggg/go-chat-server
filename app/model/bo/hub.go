@@ -1,8 +1,6 @@
 package bo
 
 import (
-	"sync"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -11,7 +9,6 @@ type RoomId string
 type Room map[string]map[*Client]struct{}
 
 type Client struct {
-	Mu       sync.Mutex
 	Conn     *websocket.Conn
 	UserInfo *UserInfo
 	RoomId   RoomId
