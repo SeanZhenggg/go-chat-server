@@ -5,32 +5,29 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
-	"os/signal"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	addr      = flag.String("addr", "localhost:8080", "http service address")
-	interrupt = make(chan os.Signal, 1)
+	addr = flag.String("addr", "localhost:8080", "http service address")
 )
 
 func main() {
-	for i := 0; i < 500; i++ {
+	for i := 0; i < 300; i++ {
 		go createClient(fmt.Sprintf("account=sean00%v&roomId=1&token=aaa", i))
+		//go createClient("")
 	}
 
-	<-interrupt
+	select {}
 }
 
 func createClient(query string) {
 	flag.Parse()
-	signal.Notify(interrupt, os.Interrupt)
 
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/websocket", RawQuery: query}
-	// u := url.URL{Scheme: "ws", Host: *addr, Path: "/websocket"}
+	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws/1", RawQuery: query}
 	log.Printf("connecting to %s", u.String())
 
 	c, err := connectWS(u.String())
@@ -39,50 +36,35 @@ func createClient(query string) {
 		return
 	}
 
-	done := make(chan struct{})
-
 	go func() {
-		defer close(done)
 		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				return
+			select {
+			default:
+				_, message, err := c.ReadMessage()
+				if err != nil {
+					log.Println("ReadMessage error:", err)
+					return
+				}
+				log.Printf("recv: %s", message)
 			}
-			log.Printf("recv: %s", message)
 		}
 	}()
 
-	ticker := time.NewTicker(time.Millisecond * 1000)
-	defer ticker.Stop()
+	go func() {
+		ticker := time.NewTicker(time.Millisecond * 1000)
+		defer ticker.Stop()
 
-	for {
-		select {
-		case <-done:
-			return
-		case t := <-ticker.C:
-			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
-			if err != nil {
-				log.Println("write:", err)
-				return
-			}
-		case <-interrupt:
-			log.Println("interrupt")
-
-			// Cleanly close the connection by sending a close message and then
-			// waiting (with timeout) for the server to close the connection.
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				log.Println("write close:", err)
-				return
-			}
+		for {
 			select {
-			case <-done:
-			case <-time.After(time.Second):
+			case t := <-ticker.C:
+				err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+				if err != nil {
+					log.Println("write:", err)
+					return
+				}
 			}
-			return
 		}
-	}
+	}()
 }
 
 func _connection(url string) (*websocket.Conn, error) {
@@ -90,7 +72,6 @@ func _connection(url string) (*websocket.Conn, error) {
 
 	if err != nil {
 		log.Printf("connection error : %v", err)
-		fmt.Printf("c : %v", c)
 
 		return nil, err
 	}

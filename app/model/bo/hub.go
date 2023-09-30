@@ -29,3 +29,10 @@ type BroadcastState struct {
 	Message []byte
 	RoomId  RoomId
 }
+
+type ChatMessage struct {
+	RoomId   RoomId `json:"roomId"`
+	Account  string `json:"account"`
+	Message  string `json:"message"`
+	Nickname string `json:"nickname"`
+}

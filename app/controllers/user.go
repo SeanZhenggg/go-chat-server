@@ -6,6 +6,7 @@ import (
 	"chat/app/service"
 	"chat/app/utils/errortool"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -100,6 +101,8 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 		Token: boUserLoginResp.Token,
 	}
 
+	ctx.SetCookie("account", dtoUserLogin.Account, int(time.Hour.Seconds()), "/", "localhost", false, false)
+	ctx.SetCookie("token", dtoUserLoginResp.Token, int(time.Hour.Seconds()), "/", "localhost", false, false)
 	ctrl.SetResponse.SetStandardResponse(ctx, http.StatusOK, dtoUserLoginResp)
 }
 
