@@ -4,7 +4,6 @@ import (
 	"chat/app/constants"
 	"chat/app/model/bo"
 	"chat/app/utils/logger"
-	"fmt"
 	"sync"
 	"time"
 
@@ -47,7 +46,6 @@ func (srv *hub) run(hubSrv *hubService) {
 		ticker.Stop()
 		close(srv.clientChan)
 		close(srv.broadcastChan)
-		fmt.Println("run stop ...")
 	}()
 
 	for {
@@ -55,25 +53,16 @@ func (srv *hub) run(hubSrv *hubService) {
 		case state := <-srv.clientChan:
 			srv.mu.Lock()
 
-			switch state.IsRegister {
-			case constants.ClientState_Registered:
-				srv.clients[state.Client] = struct{}{}
-			case constants.ClientState_UnRegistered:
-				delete(srv.clients, state.Client)
-			}
-
-			fmt.Printf("room clients count : %v\n", len(srv.clients))
-
-			if len(srv.clients) == 0 {
+			roomRemoved := srv.updateClient(state)
+			if roomRemoved {
 				hubSrv.house.Delete(state.Client.RoomId)
 				srv.mu.Unlock()
-				fmt.Println("delete room")
 				return
 			}
 
 			srv.mu.Unlock()
 		case message := <-srv.broadcastChan:
-			srv.broadcastMsg(hubSrv, message)
+			srv.broadcastMsg(message)
 		case <-ticker.C:
 			srv.sendPingToAll()
 		}
@@ -108,31 +97,21 @@ func (srv *hubService) BroadCastMsg(data *bo.BroadcastState) {
 	room.broadcastChan <- data
 }
 
-//func (srv *hub) updateClient(data *bo.ClientState) (removed bool) {
-//	srv.mu.Lock()
-//	defer func() {
-//		srv.mu.Unlock()
-//		fmt.Println("updateClient end ...\n")
-//	}()
-//
-//	switch data.IsRegister {
-//	case constants.ClientState_Registered:
-//		srv.clients[data.Client] = struct{}{}
-//	case constants.ClientState_UnRegistered:
-//		delete(srv.clients, data.Client)
-//		if len(srv.clients) == 0 {
-//			removed = true
-//		}
-//	}
-//
-//	fmt.Println("🍎🍎🍎🍎🍎🍎 -----clients now start-----")
-//	for client := range srv.clients {
-//		fmt.Printf("🍎🍎🍎🍎🍎🍎 %v \n", client.UserInfo.Account)
-//	}
-//	fmt.Println("🍎🍎🍎🍎🍎🍎 -----clients now end-----")
-//
-//	return
-//}
+func (srv *hub) updateClient(data *bo.ClientState) (removed bool) {
+	removed = false
+
+	switch data.IsRegister {
+	case constants.ClientState_Registered:
+		srv.clients[data.Client] = struct{}{}
+	case constants.ClientState_UnRegistered:
+		delete(srv.clients, data.Client)
+		if len(srv.clients) == 0 {
+			removed = true
+		}
+	}
+
+	return
+}
 
 func (srv *hubService) GetRoomOrCreateIfNotExisted(roomId bo.RoomId) *hub {
 	room, isExist := srv.house.Load(roomId)
@@ -155,17 +134,16 @@ func (srv *hubService) getRoom(roomId bo.RoomId) *hub {
 	return room.(*hub)
 }
 
-func (srv *hub) broadcastMsg(hubSrv *hubService, data *bo.BroadcastState) {
+func (srv *hub) broadcastMsg(data *bo.BroadcastState) {
 	for client := range srv.clients {
-		srv.writeMsg(hubSrv, client, data)
+		srv.writeMsg(client, data)
 	}
 }
 
-func (srv *hub) writeMsg(hubSrv *hubService, client *bo.Client, data *bo.BroadcastState) {
+func (srv *hub) writeMsg(client *bo.Client, data *bo.BroadcastState) {
 	var err error
 	if err = client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
 		srv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
-		//hubSrv.closeClientConn(client)
 		return
 	}
 
@@ -178,14 +156,12 @@ func (srv *hub) writeMsg(hubSrv *hubService, client *bo.Client, data *bo.Broadca
 	}()
 
 	if err != nil {
-		//srv.logger.Error(xerrors.Errorf("writeMsg NextWriter error : %w", err))
-		//hubSrv.closeClientConn(client)
+		srv.logger.Error(xerrors.Errorf("writeMsg NextWriter error : %w", err))
 		return
 	}
 
 	if _, err = w.Write(data.Message); err != nil {
-		//srv.logger.Error(xerrors.Errorf("writeMsg Write error : %w", err))
-		//hubSrv.closeClientConn(client)
+		srv.logger.Error(xerrors.Errorf("writeMsg Write error : %w", err))
 		return
 	}
 
@@ -205,13 +181,4 @@ func (srv *hub) sendPingToAll() {
 			return
 		}
 	}
-}
-
-func (srv *hubService) closeClientConn(client *bo.Client) {
-	//fmt.Printf("call closeClientConn from client : %v\n", client.UserInfo.Account)
-	//srv.HouseChange(&bo.ClientState{
-	//	Client:     client,
-	//	IsRegister: constants.ClientState_UnRegistered,
-	//})
-	//client.Conn.Close()
 }
