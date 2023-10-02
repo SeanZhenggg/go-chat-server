@@ -1,6 +1,8 @@
 package service
 
 import (
+	"chat/app/utils/errortool"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/xerrors"
 
@@ -79,6 +81,10 @@ func (srv *userService) UserLogin(ctx *gin.Context, data *bo.UserLoginData) (*bo
 
 	loggedinUser, err := srv.userRepo.UserLogin(poUserLogin)
 	if err != nil {
+		customErr, ok := errortool.ParseError(err)
+		if ok && errors.Is(customErr, errortool.DbErr.NoRow) {
+			return nil, xerrors.Errorf("userService UserLogin error! : %w", errortool.ReqErr.AccountOrPasswordError)
+		}
 		return nil, xerrors.Errorf("userService UserLogin error! : %w", err)
 	}
 
@@ -102,6 +108,9 @@ func (srv *userService) UserRegister(ctx *gin.Context, data *bo.UserRegData) err
 	}
 
 	if err := srv.userRepo.UserRegister(poUserReg); err != nil {
+		if errors.Is(err, errortool.DbErr.UniqueViolation) {
+			return xerrors.Errorf("userService UserRegister error! : %w", errortool.ReqErr.AccountOrNicknameDuplicateError)
+		}
 		return xerrors.Errorf("userService UserRegister error! : %w", err)
 	}
 

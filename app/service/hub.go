@@ -4,6 +4,7 @@ import (
 	"chat/app/constants"
 	"chat/app/model/bo"
 	"chat/app/utils/logger"
+	"fmt"
 	"sync"
 	"time"
 
@@ -46,6 +47,7 @@ func (srv *hub) run(hubSrv *hubService) {
 		ticker.Stop()
 		close(srv.clientChan)
 		close(srv.broadcastChan)
+		fmt.Println("hub closed...")
 	}()
 
 	for {
@@ -55,7 +57,7 @@ func (srv *hub) run(hubSrv *hubService) {
 
 			roomRemoved := srv.updateClient(state)
 			if roomRemoved {
-				hubSrv.house.Delete(state.Client.RoomId)
+				hubSrv.house.Delete(state.RoomId)
 				srv.mu.Unlock()
 				return
 			}
@@ -73,18 +75,19 @@ func (srv *hubService) createHub(roomId bo.RoomId) *hub {
 	newHub := &hub{
 		clients:       make(map[*bo.Client]struct{}),
 		roomId:        roomId,
-		clientChan:    make(chan *bo.ClientState, 1024),
-		broadcastChan: make(chan *bo.BroadcastState, 1024),
+		clientChan:    make(chan *bo.ClientState, 256),
+		broadcastChan: make(chan *bo.BroadcastState, 256),
 		logger:        srv.logger,
 	}
 
+	fmt.Printf("room %v created ... \n", roomId)
 	go newHub.run(srv)
 
 	return newHub
 }
 
 func (srv *hubService) HouseChange(data *bo.ClientState) {
-	room := srv.getRoom(data.Client.RoomId)
+	room := srv.getRoom(data.RoomId)
 	room.clientChan <- data
 }
 
@@ -162,9 +165,7 @@ func (srv *hub) writeMsg(client *bo.Client, data *bo.BroadcastState) {
 
 	if _, err = w.Write(data.Message); err != nil {
 		srv.logger.Error(xerrors.Errorf("writeMsg Write error : %w", err))
-		return
 	}
-
 }
 
 func (srv *hub) sendPingToAll() {

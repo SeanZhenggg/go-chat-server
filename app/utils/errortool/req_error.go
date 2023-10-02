@@ -1,17 +1,21 @@
 package errortool
 
+const (
+	ReqGroupCode int = 2
+)
+
 func ProvideReqError(groups IGroupRepo, codes ICodeRepo) interface{} {
-	group := Define.GenGroup(1)
+	group := Define.GenGroup(ReqGroupCode)
 
 	return &reqError{
-		UnknownError:      group.GenError(1, "未知錯誤"),
-		RequestParamError: group.GenError(2, "請求參數錯誤"),
-		RequestTokenError: group.GenError(3, "Token驗證失敗"),
+		RequestTokenError:               group.GenError(1, "Token驗證失敗"),
+		AccountOrPasswordError:          group.GenError(2, "帳號或密碼錯誤"),
+		AccountOrNicknameDuplicateError: group.GenError(3, "帳號或暱稱重複"),
 	}
 }
 
 type reqError struct {
-	UnknownError      error
-	RequestParamError error
-	RequestTokenError error
+	RequestTokenError               error
+	AccountOrPasswordError          error
+	AccountOrNicknameDuplicateError error
 }

@@ -17,6 +17,7 @@ type Client struct {
 type ClientState struct {
 	IsRegister bool
 	Client     *Client
+	RoomId     RoomId
 }
 
 type RoomState struct {

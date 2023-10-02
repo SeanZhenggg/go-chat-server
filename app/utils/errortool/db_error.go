@@ -1,22 +1,25 @@
 package errortool
 
 import (
+	"errors"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
 )
 
 const (
-	groupCodeDB int = 10
+	DBGroupCode int = 3
 
 	// pg native error code
 	UniqueViolationCode string = pgerrcode.UniqueViolation
 )
 
 func ProvideDBError(groups IGroupRepo, codes ICodeRepo) interface{} {
-	group := Define.GenGroup(groupCodeDB)
+	group := Define.GenGroup(DBGroupCode)
 
 	return &dbError{
-		UniqueViolation: group.GenError(1, "Duplicate Key Value Violation"),
+		NoRow:           group.GenError(1, "No Rows Returned"),
+		UniqueViolation: group.GenError(2, "Duplicate Key Value Violation"),
 	}
 }
 
@@ -27,11 +30,17 @@ var (
 )
 
 type dbError struct {
+	NoRow           error
 	UniqueViolation error
 }
 
 func ParseDBError(err error) error {
-	pgError, ok := err.(*pgconn.PgError)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return DbErr.NoRow
+	}
+
+	var pgError *pgconn.PgError
+	ok := errors.As(err, &pgError)
 	if !ok {
 		return err
 	}

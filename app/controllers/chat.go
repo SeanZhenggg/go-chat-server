@@ -72,6 +72,7 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 			Conn:     conn,
 			RoomId:   roomId,
 		},
+		RoomId: roomId,
 	}
 
 	ctrl.hubSrv.GetRoomOrCreateIfNotExisted(roomId)
@@ -113,6 +114,7 @@ func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 		ctrl.hubSrv.HouseChange(&bo.ClientState{
 			Client:     cli,
 			IsRegister: constants.ClientState_UnRegistered,
+			RoomId:     cli.RoomId,
 		})
 		cli.Conn.Close()
 	}()

@@ -1,30 +1,40 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"flag"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/url"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 var (
-	addr = flag.String("addr", "localhost:8080", "http service address")
+	account = flag.String("acc", "sean001", "account to join room")
+	roomId  = flag.Int("room", 1, "connected to which room")
+	addr    = flag.String("addr", "localhost:8080", "http service address")
 )
 
 func main() {
+	flag.Parse()
+	//fmt.Printf("account: %s, roomId: %d, addr: %s\n", *account, *roomId, *addr)
+
 	for i := 0; i < 300; i++ {
-		go createClient(fmt.Sprintf("account=sean00%v&roomId=1&token=aaa", i))
-		//go createClient("")
+		t, err := generateRandomToken(64)
+		if err != nil {
+			fmt.Printf("token error : %v\n", err)
+		}
+
+		go createClient(fmt.Sprintf("account=%v&roomId=%v&token=%v", *account, *roomId, t))
 	}
 
 	select {}
+
 }
 
 func createClient(query string) {
-	flag.Parse()
 
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/websocket", RawQuery: query}
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws/1", RawQuery: query}
@@ -36,6 +46,7 @@ func createClient(query string) {
 		return
 	}
 
+	// read
 	go func() {
 		for {
 			select {
@@ -50,6 +61,7 @@ func createClient(query string) {
 		}
 	}()
 
+	// write
 	go func() {
 		ticker := time.NewTicker(time.Millisecond * 1000)
 		defer ticker.Stop()
@@ -67,31 +79,30 @@ func createClient(query string) {
 	}()
 }
 
-func _connection(url string) (*websocket.Conn, error) {
-	c, _, err := websocket.DefaultDialer.Dial(url, nil)
-
-	if err != nil {
-		log.Printf("connection error : %v", err)
-
-		return nil, err
-	}
-
-	return c, nil
-}
-
-func connectWS(url string) (*websocket.Conn, error) {
-	var c *websocket.Conn
-	var err error
-
+func connectWS(url string) (c *websocket.Conn, err error) {
 	for count := 0; count < 5; count++ {
-		c, err = _connection(url)
-		if err == nil {
-			return c, nil
+		c, _, err := websocket.DefaultDialer.Dial(url, nil)
+
+		if err != nil {
+			log.Printf("connection error : %v", err)
+			time.After(1 * time.Second)
+			continue
 		}
-		time.After(1 * time.Second)
+
+		return c, nil
 	}
 
 	log.Printf("connection failed after 5 times...")
 
 	return nil, err
+}
+
+func generateRandomToken(length int) (string, error) {
+	randomBytes := make([]byte, length)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	token := base64.URLEncoding.EncodeToString(randomBytes)
+	return token, nil
 }

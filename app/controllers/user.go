@@ -54,7 +54,7 @@ func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
 func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
 	dtoUserCond := &dto.UserCondDto{}
 	if err := ctx.BindUri(dtoUserCond); err != nil {
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.ReqErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 	dtoUserLogin := &dto.UserLoginDto{}
 
 	if err := ctx.BindJSON(dtoUserLogin); err != nil {
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.ReqErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 func (ctrl *UserCtrl) PostUserRegister(ctx *gin.Context) {
 	dtoUserRegData := &dto.UserRegDto{}
 	if err := ctx.BindJSON(dtoUserRegData); err != nil {
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.ReqErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 

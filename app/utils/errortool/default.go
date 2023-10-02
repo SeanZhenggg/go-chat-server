@@ -5,7 +5,9 @@ import (
 )
 
 const (
-	errCodeMax = 999
+	ErrorCodeMin   = 1
+	ErrorCodeMax   = 999
+	ErrorCodeRange = 1000
 )
 
 func ProvideDefine() *define {
@@ -21,7 +23,7 @@ type define struct {
 }
 
 func genGroupCode(groupBase int) int {
-	return groupBase * 1000
+	return groupBase * ErrorCodeRange
 }
 
 func (d *define) GenGroup(base int) *errorGroup {
@@ -46,8 +48,8 @@ type errorGroup struct {
 }
 
 func (e *errorGroup) GenError(code int, message string) error {
-	if code > errCodeMax {
-		log.Panicf("errorGroup error: code max than 999, code: %d", code)
+	if code > ErrorCodeMax || code < ErrorCodeMin {
+		log.Panicf("errorGroup error: code less than %v or code greater than %v, code: %d", ErrorCodeMin, ErrorCodeMax, code)
 	}
 
 	errCode := e.makeCode(code)
