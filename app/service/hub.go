@@ -47,6 +47,10 @@ func (srv *hubService) createHub(roomId bo.RoomId) *hub {
 
 func (srv *hubService) HouseChange(data *bo.ClientState) {
 	room := srv.getRoom(data.RoomId)
+	if room == nil {
+		return
+	}
+
 	room.clientStateChan <- data
 }
 

@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
+	mrand "math/rand"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -18,34 +20,87 @@ var (
 )
 
 func main() {
+	var accounts []string
 	flag.Parse()
-	//fmt.Printf("account: %s, roomId: %d, addr: %s\n", *account, *roomId, *addr)
 
-	for i := 0; i < 300; i++ {
-		t, err := generateRandomToken(64)
-		if err != nil {
-			fmt.Printf("token error : %v\n", err)
-		}
-
-		go createClient(fmt.Sprintf("account=%v&roomId=%v&token=%v", *account, *roomId, t))
+	if strings.ContainsAny(*account, ",") {
+		accounts = append(accounts, strings.Split(*account, ",")...)
+	} else {
+		accounts[0] = *account
 	}
+
+	fmt.Printf("accounts: %+v, roomId: %d, addr: %s\n", accounts, *roomId, *addr)
+
+	//concurrentClientMsgSendTest(accounts)
+	concurrentJoinAndLeavingTest(accounts)
 
 	select {}
 
 }
 
-func createClient(query string) {
+func concurrentClientMsgSendTest(accs []string) {
+	for i := 0; i < 300; i++ {
+		randIdx := mrand.Intn(len(accs))
+		acc := accs[randIdx]
+		t, err := generateRandomToken(64)
+		if err != nil {
+			fmt.Printf("token error : %v\n", err)
+		}
+
+		go func() {
+			c, err := createClient(fmt.Sprintf("account=%v&roomId=%v&token=%v", acc, *roomId, t))
+			if err != nil {
+				fmt.Printf("create client error : %v\n", err)
+				return
+			}
+
+			sendAndRecvMessage(c)
+		}()
+	}
+}
+
+func concurrentJoinAndLeavingTest(accs []string) {
+	// join and leave
+	go func() {
+		t, err := generateRandomToken(64)
+		if err != nil {
+			fmt.Printf("token error : %v\n", err)
+		}
+
+		joinAndLeave(accs[0], t)
+	}()
+
+	// join
+	go func() {
+		t, err := generateRandomToken(64)
+		if err != nil {
+			fmt.Printf("token error : %v\n", err)
+		}
+		//time.Sleep(20 * time.Millisecond)
+		//
+		//_, err = createClient(fmt.Sprintf("account=%v&roomId=%v&token=%v", accs[1], *roomId, t))
+		//if err != nil {
+		//	fmt.Printf("create client error : %v\n", err)
+		//	return
+		//}
+		joinAndLeave(accs[1], t)
+
+		//fmt.Printf("=================account %v join room %v =====================\n", accs[1], *roomId)
+	}()
+}
+
+func createClient(query string) (*websocket.Conn, error) {
 
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/websocket", RawQuery: query}
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws/1", RawQuery: query}
 	log.Printf("connecting to %s", u.String())
 
 	c, err := connectWS(u.String())
-	if err != nil {
-		log.Fatal("dial:", err)
-		return
-	}
 
+	return c, err
+}
+
+func sendAndRecvMessage(c *websocket.Conn) {
 	// read
 	go func() {
 		for {
@@ -77,6 +132,23 @@ func createClient(query string) {
 			}
 		}
 	}()
+}
+
+func joinAndLeave(acc string, t string) {
+	var c *websocket.Conn = nil
+	var err error = nil
+	for {
+		c, err = createClient(fmt.Sprintf("account=%v&roomId=%v&token=%v", acc, *roomId, t))
+		fmt.Printf("account %v joinned room %v\n", acc, *roomId)
+		time.Sleep(20 * time.Millisecond)
+		if err != nil {
+			fmt.Printf("token error : %v\n", err)
+		}
+
+		c.Close()
+		fmt.Printf("\"=================account %v leaved room %v\"=================\n", acc, *roomId)
+		time.Sleep(200 * time.Millisecond)
+	}
 }
 
 func connectWS(url string) (c *websocket.Conn, err error) {
