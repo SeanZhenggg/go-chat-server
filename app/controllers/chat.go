@@ -79,7 +79,7 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 
 	ctrl.hubSrv.HouseChange(client)
 
-	chatMessage := bo.ChatMessage{
+	chatMessage := &bo.ChatMessage{
 		RoomId:   bo.RoomId(chatQueryDto.RoomId),
 		Account:  chatQueryDto.Account,
 		Message:  "已連線",
