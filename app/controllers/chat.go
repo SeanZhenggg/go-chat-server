@@ -75,9 +75,7 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 		RoomId: roomId,
 	}
 
-	ctrl.hubSrv.GetRoomOrCreateIfNotExisted(roomId)
-
-	ctrl.hubSrv.HouseChange(client)
+	ctrl.hubSrv.ClientStateChange(client)
 
 	chatMessage := &bo.ChatMessage{
 		RoomId:   bo.RoomId(chatQueryDto.RoomId),
@@ -111,7 +109,7 @@ func (ctrl *ChatCtrl) defaultUpgrade() *websocket.Upgrader {
 
 func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 	defer func() {
-		ctrl.hubSrv.HouseChange(&bo.ClientState{
+		ctrl.hubSrv.ClientStateChange(&bo.ClientState{
 			Client:     cli,
 			IsRegister: constants.ClientState_UnRegistered,
 			RoomId:     cli.RoomId,
@@ -128,8 +126,10 @@ func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 	for {
 		_, message, err := cli.Conn.ReadMessage()
 		if err != nil {
-			ctrl.logger.Error(xerrors.Errorf("readPump IsUnexpectedCloseError error : %w", err))
-			break
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				ctrl.logger.Error(xerrors.Errorf("readPump IsUnexpectedCloseError error : %w", err))
+				break
+			}
 		}
 
 		chatMessage := bo.ChatMessage{

@@ -147,7 +147,7 @@ func joinAndLeave(acc string, t string) {
 
 		c.Close()
 		fmt.Printf("\"=================account %v leaved room %v\"=================\n", acc, *roomId)
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
