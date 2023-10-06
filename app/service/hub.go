@@ -5,7 +5,6 @@ import (
 	"chat/app/model/bo"
 	"chat/app/utils/logger"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -67,17 +66,11 @@ func (srv *hubService) ClientRegister(data *bo.Client) {
 	roomLock.Lock()
 
 	room, err = srv.getRoom(roomId)
-	fmt.Println("Sleep 5 seconds...")
-	time.Sleep(time.Second * 5)
 	if err != nil {
-		fmt.Printf("Create room %v...\n", roomId)
 		room = srv.createHub(roomId)
 		srv.rooms.Store(roomId, room)
-	} else {
-		fmt.Printf("Found room %v...\n", roomId)
 	}
 
-	fmt.Printf("ClientRegister room %+v, mem: %p\n", room, room)
 	room.clients[data] = struct{}{}
 	roomLock.Unlock()
 }
@@ -165,7 +158,6 @@ func (srv *hub) unregister(client *bo.Client) {
 
 	if len(srv.clients) == 0 {
 		srv.hubSrv.rooms.Delete(client.RoomId)
-		fmt.Printf("Delete room %v...\n", client.RoomId)
 		roomLock.Unlock()
 
 		srv.hubSrv.lockForRoomLocks.Lock()
