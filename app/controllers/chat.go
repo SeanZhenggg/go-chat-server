@@ -65,17 +65,12 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 	}
 
 	roomId := bo.RoomId(chatQueryDto.RoomId)
-	client := &bo.ClientState{
-		IsRegister: constants.ClientState_Registered,
-		Client: &bo.Client{
-			UserInfo: boUserInfo,
-			Conn:     conn,
-			RoomId:   roomId,
-		},
-		RoomId: roomId,
+	client := &bo.Client{
+		UserInfo: boUserInfo,
+		Conn:     conn,
+		RoomId:   roomId,
 	}
-
-	ctrl.hubSrv.ClientStateChange(client)
+	ctrl.hubSrv.ClientRegister(client)
 
 	chatMessage := &bo.ChatMessage{
 		RoomId:   bo.RoomId(chatQueryDto.RoomId),
@@ -83,18 +78,16 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 		Message:  "已連線",
 		Nickname: chatQueryDto.Account,
 	}
-
 	message, err := json.Marshal(chatMessage)
 	if err != nil {
 		ctrl.logger.Error(xerrors.Errorf("JSON marshal error : %w", err))
 	}
-
-	ctrl.hubSrv.BroadCastMsg(&bo.BroadcastState{
+	ctrl.hubSrv.BroadcastMsg(&bo.BroadcastState{
 		Message: message,
 		RoomId:  bo.RoomId(chatQueryDto.RoomId),
 	})
 
-	go ctrl.readPump(client.Client)
+	go ctrl.readPump(client)
 }
 
 func (ctrl *ChatCtrl) defaultUpgrade() *websocket.Upgrader {
@@ -109,16 +102,13 @@ func (ctrl *ChatCtrl) defaultUpgrade() *websocket.Upgrader {
 
 func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 	defer func() {
-		ctrl.hubSrv.ClientStateChange(&bo.ClientState{
-			Client:     cli,
-			IsRegister: constants.ClientState_UnRegistered,
-			RoomId:     cli.RoomId,
-		})
+		ctrl.hubSrv.ClientUnregister(cli)
 		cli.Conn.Close()
 	}()
 
 	cli.Conn.SetReadDeadline(time.Now().Add(constants.PongWait))
 	cli.Conn.SetPongHandler(func(a string) error {
+		//fmt.Printf("receive pong ... %v", a)
 		cli.Conn.SetReadDeadline(time.Now().Add(constants.PongWait))
 		return nil
 	})
@@ -128,8 +118,8 @@ func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				ctrl.logger.Error(xerrors.Errorf("readPump IsUnexpectedCloseError error : %w", err))
-				break
 			}
+			break
 		}
 
 		chatMessage := bo.ChatMessage{
@@ -142,9 +132,10 @@ func (ctrl *ChatCtrl) readPump(cli *bo.Client) {
 		sendMsg, err := json.Marshal(chatMessage)
 		if err != nil {
 			ctrl.logger.Error(xerrors.Errorf("JSON marshal error : %w", err))
+			break
 		}
 
-		ctrl.hubSrv.BroadCastMsg(&bo.BroadcastState{
+		ctrl.hubSrv.BroadcastMsg(&bo.BroadcastState{
 			Message: sendMsg,
 			RoomId:  cli.RoomId,
 		})

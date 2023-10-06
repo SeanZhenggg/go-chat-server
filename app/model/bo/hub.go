@@ -14,18 +14,6 @@ type Client struct {
 	RoomId   RoomId
 }
 
-type ClientState struct {
-	IsRegister bool
-	Client     *Client
-	RoomId     RoomId
-}
-
-type RoomState struct {
-	IsJoin bool
-	Client *Client
-	RoomId RoomId
-}
-
 type BroadcastState struct {
 	Message []byte
 	RoomId  RoomId

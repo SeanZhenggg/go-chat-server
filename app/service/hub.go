@@ -4,6 +4,7 @@ import (
 	"chat/app/constants"
 	"chat/app/model/bo"
 	"chat/app/utils/logger"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -13,9 +14,9 @@ import (
 )
 
 type IHubSrv interface {
-	GetRoomOrCreateIfNotExisted(roomId bo.RoomId) *hub
-	ClientStateChange(data *bo.ClientState)
-	BroadCastMsg(data *bo.BroadcastState)
+	ClientRegister(data *bo.Client)
+	ClientUnregister(data *bo.Client)
+	BroadcastMsg(data *bo.BroadcastState)
 }
 
 func ProvideHubSrv(logger logger.ILogger) IHubSrv {
@@ -28,20 +29,17 @@ func ProvideHubSrv(logger logger.ILogger) IHubSrv {
 }
 
 type hubService struct {
-	house      sync.Map
-	roomMuLock sync.Mutex
-	roomLocks  map[bo.RoomId]*sync.Mutex
-	logger     logger.ILogger
+	rooms            sync.Map
+	lockForRoomLocks sync.Mutex
+	roomLocks        map[bo.RoomId]*sync.Mutex
+	logger           logger.ILogger
 }
 
 func (srv *hubService) createHub(roomId bo.RoomId) *hub {
-	roomLock := &sync.Mutex{}
-	srv.roomLocks[roomId] = roomLock
-
 	newHub := &hub{
 		clients:            make(map[*bo.Client]struct{}),
 		roomId:             roomId,
-		clientStateChan:    make(chan *bo.ClientState, 256),
+		unregisterChan:     make(chan *bo.Client, 256),
 		broadcastStateChan: make(chan *bo.BroadcastState, 256),
 		hubSrv:             srv,
 	}
@@ -51,48 +49,60 @@ func (srv *hubService) createHub(roomId bo.RoomId) *hub {
 	return newHub
 }
 
-func (srv *hubService) ClientStateChange(data *bo.ClientState) {
-	room := srv.GetRoomOrCreateIfNotExisted(data.RoomId)
-	fmt.Printf("ClientStateChange room %+v\n", room)
-	room.clientStateChan <- data
+func (srv *hubService) ClientRegister(data *bo.Client) {
+	srv.lockForRoomLocks.Lock()
+
+	var (
+		room   *hub
+		err    error
+		roomId = data.RoomId
+	)
+
+	roomLock, ok := srv.roomLocks[roomId]
+	if !ok {
+		roomLock = &sync.Mutex{}
+		srv.roomLocks[roomId] = roomLock
+	}
+	srv.lockForRoomLocks.Unlock()
+	roomLock.Lock()
+
+	room, err = srv.getRoom(roomId)
+	fmt.Println("Sleep 5 seconds...")
+	time.Sleep(time.Second * 5)
+	if err != nil {
+		fmt.Printf("Create room %v...\n", roomId)
+		room = srv.createHub(roomId)
+		srv.rooms.Store(roomId, room)
+	} else {
+		fmt.Printf("Found room %v...\n", roomId)
+	}
+
+	fmt.Printf("ClientRegister room %+v, mem: %p\n", room, room)
+	room.clients[data] = struct{}{}
+	roomLock.Unlock()
 }
 
-func (srv *hubService) BroadCastMsg(data *bo.BroadcastState) {
+func (srv *hubService) ClientUnregister(data *bo.Client) {
 	room, err := srv.getRoom(data.RoomId)
 	if err != nil {
-		srv.logger.Error(xerrors.Errorf("BroadCastMsg error : %w", err))
+		srv.logger.Error(xerrors.Errorf("ClientUnregister error : %w", err))
+		return
+	}
+	room.unregisterChan <- data
+}
+
+func (srv *hubService) BroadcastMsg(data *bo.BroadcastState) {
+	room, err := srv.getRoom(data.RoomId)
+	if err != nil {
+		srv.logger.Error(xerrors.Errorf("BroadcastMsg error : %w", err))
 		return
 	}
 
 	room.broadcastStateChan <- data
 }
 
-func (srv *hubService) GetRoomOrCreateIfNotExisted(roomId bo.RoomId) *hub {
-	srv.roomMuLock.Lock()
-	defer srv.roomMuLock.Unlock()
-
-	var (
-		room *hub
-		err  error
-	)
-
-	room, err = srv.getRoom(roomId)
-
-	fmt.Println("Sleep 5 seconds...")
-	time.Sleep(time.Second * 5)
-	if err != nil {
-		fmt.Printf("Create room %v...\n", roomId)
-		room = srv.createHub(roomId)
-		srv.house.Store(roomId, room)
-	} else {
-		fmt.Printf("Found room %v...\n", roomId)
-	}
-
-	return room
-}
-
 func (srv *hubService) getRoom(roomId bo.RoomId) (*hub, error) {
-	room, isExist := srv.house.Load(roomId)
+	room, isExist := srv.rooms.Load(roomId)
 
 	if !isExist {
 		err := xerrors.Errorf("getRoom no room found : %v", roomId)
@@ -106,7 +116,7 @@ func (srv *hubService) getRoom(roomId bo.RoomId) (*hub, error) {
 type hub struct {
 	clients            map[*bo.Client]struct{}
 	roomId             bo.RoomId
-	clientStateChan    chan *bo.ClientState
+	unregisterChan     chan *bo.Client
 	broadcastStateChan chan *bo.BroadcastState
 	hubSrv             *hubService
 }
@@ -116,54 +126,64 @@ func (srv *hub) run() {
 
 	defer func() {
 		ticker.Stop()
-		close(srv.clientStateChan)
+		close(srv.unregisterChan)
 		close(srv.broadcastStateChan)
 	}()
 
 	for {
 		select {
-		case state := <-srv.clientStateChan:
-			roomLock := srv.hubSrv.roomLocks[state.RoomId]
-			roomLock.Lock()
-
-			srv.updateClient(state)
-			if len(srv.clients) == 0 {
-				delete(srv.clients, state.Client)
-				srv.hubSrv.house.Delete(state.RoomId)
-				fmt.Printf("Delete room %v...\n", state.RoomId)
-				roomLock.Unlock()
-
-				srv.hubSrv.roomMuLock.Lock()
-				if roomLock.TryLock() {
-					if len(srv.clients) == 0 {
-						delete(srv.hubSrv.roomLocks, state.RoomId)
-					}
-					roomLock.Unlock()
-				}
-
-				srv.hubSrv.roomMuLock.Unlock()
-				return
-			}
-
-			roomLock.Unlock()
+		case state := <-srv.unregisterChan:
+			srv.unregister(state)
 		case message := <-srv.broadcastStateChan:
-			srv.broadcastMsg(message)
+			srv.broadcast(message)
 		case <-ticker.C:
 			srv.sendPingToAll()
 		}
 	}
 }
 
-func (srv *hub) updateClient(data *bo.ClientState) {
-	switch data.IsRegister {
-	case constants.ClientState_Registered:
-		srv.clients[data.Client] = struct{}{}
-	case constants.ClientState_UnRegistered:
-		delete(srv.clients, data.Client)
+func (srv *hub) unregister(client *bo.Client) {
+	roomLock := srv.hubSrv.roomLocks[client.RoomId]
+	roomLock.Lock()
+
+	delete(srv.clients, client)
+
+	chatMessage := &bo.ChatMessage{
+		RoomId:   client.RoomId,
+		Account:  client.UserInfo.Account,
+		Message:  "已離線",
+		Nickname: client.UserInfo.Nickname,
 	}
+	message, err := json.Marshal(chatMessage)
+	if err != nil {
+		srv.hubSrv.logger.Error(xerrors.Errorf("JSON marshal error : %w", err))
+	}
+	srv.broadcast(&bo.BroadcastState{
+		Message: message,
+		RoomId:  client.RoomId,
+	})
+
+	if len(srv.clients) == 0 {
+		srv.hubSrv.rooms.Delete(client.RoomId)
+		fmt.Printf("Delete room %v...\n", client.RoomId)
+		roomLock.Unlock()
+
+		srv.hubSrv.lockForRoomLocks.Lock()
+		if roomLock.TryLock() {
+			if len(srv.clients) == 0 {
+				delete(srv.hubSrv.roomLocks, client.RoomId)
+			}
+			roomLock.Unlock()
+		}
+
+		srv.hubSrv.lockForRoomLocks.Unlock()
+		return
+	}
+
+	roomLock.Unlock()
 }
 
-func (srv *hub) broadcastMsg(data *bo.BroadcastState) {
+func (srv *hub) broadcast(data *bo.BroadcastState) {
 	for client := range srv.clients {
 		srv.writeMsg(client, data)
 	}
@@ -172,7 +192,7 @@ func (srv *hub) broadcastMsg(data *bo.BroadcastState) {
 func (srv *hub) writeMsg(client *bo.Client, data *bo.BroadcastState) {
 	var err error
 	if err = client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
-		srv.hubSrv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
+		srv.hubSrv.logger.Error(xerrors.Errorf("writeMsg SetWriteDeadline error : %w", err))
 		return
 	}
 
@@ -185,7 +205,7 @@ func (srv *hub) writeMsg(client *bo.Client, data *bo.BroadcastState) {
 	}()
 
 	if err != nil {
-		srv.hubSrv.logger.Error(xerrors.Errorf("writeMsg NextWriter error : %w", err))
+		//srv.hubSrv.logger.Error(xerrors.Errorf("writeMsg NextWriter error : %w", err))
 		return
 	}
 
@@ -197,7 +217,7 @@ func (srv *hub) writeMsg(client *bo.Client, data *bo.BroadcastState) {
 func (srv *hub) sendPingToAll() {
 	for client := range srv.clients {
 		if err := client.Conn.SetWriteDeadline(time.Now().Add(constants.WriteWait)); err != nil {
-			srv.hubSrv.logger.Error(xerrors.Errorf("broadcastMsg SetWriteDeadline error : %w", err))
+			srv.hubSrv.logger.Error(xerrors.Errorf("sendPingToAll SetWriteDeadline error : %w", err))
 			return
 		}
 
