@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	Resp_Data   = "Resp_Data"
-	Resp_Status = "Resp_Status"
-	Resp_Code   = "Resp_Code"
+	RespData   = "Resp_Data"
+	RespStatus = "Resp_Status"
+	RespCode   = "Resp_Code"
 )
 
 type Controller struct {
@@ -25,7 +25,7 @@ func ProvideControllers(userCtrl IUserCtrl, chatCtrl IChatCtrl) *Controller {
 type StandardResponse struct{}
 
 func (stdResp *StandardResponse) SetStandardResponse(ctx *gin.Context, statusCode int, data interface{}) {
-	ctx.Set(Resp_Status, statusCode)
-	ctx.Set(Resp_Code, 0)
-	ctx.Set(Resp_Data, data)
+	ctx.Set(RespStatus, statusCode)
+	ctx.Set(RespCode, 0)
+	ctx.Set(RespData, data)
 }
