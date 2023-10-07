@@ -39,7 +39,7 @@ func (repo *userRepo) GetUser(ctx context.Context, cond *po.UserCond) (*po.User,
 	user := &po.User{}
 
 	db := repo.db.Session()
-	if err := db.Model(&po.User{}).Where("account = ?", cond.Account).First(user).Error; err != nil {
+	if err := db.Where("account = ?", cond.Account).First(user).Error; err != nil {
 		return nil, xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
 	}
 
@@ -48,7 +48,7 @@ func (repo *userRepo) GetUser(ctx context.Context, cond *po.UserCond) (*po.User,
 
 func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegData) error {
 	db := repo.db.Session()
-	if err := db.Model(&po.User{}).
+	if err := db.Select("Account", "Password", "Nickname").
 		Create(&po.User{Account: cond.Account, Password: cond.Password, Nickname: cond.Nickname}).
 		Error; err != nil {
 		return xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
@@ -61,7 +61,7 @@ func (repo *userRepo) UserLogin(ctx context.Context, cond *po.UserLoginData) (*p
 	user := &po.User{}
 
 	db := repo.db.Session()
-	if err := db.Model(&po.User{}).
+	if err := db.
 		Where(&po.User{Account: cond.Account, Password: cond.Password}).
 		First(user).Error; err != nil {
 		return nil, xerrors.Errorf("userRepo UserLogin error ! : %w", errortool.ParseDBError(err))
