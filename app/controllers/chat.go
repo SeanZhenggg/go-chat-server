@@ -41,21 +41,21 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 	}
 
 	// user login validation
-	//boUserInfo, err := ctrl.userSrv.ValidateUser(&bo.UserValidateCond{Token: chatQueryDto.Token})
-	//if err != nil || chatQueryDto.Account != boUserInfo.Account {
-	//	ctrl.logger.Error(xerrors.Errorf("Conn ValidateUser error : %w", err))
-	//	return
-	//}
+	boUserInfo, err := ctrl.userSrv.ValidateUser(ctx, &bo.UserValidateCond{Token: chatQueryDto.Token})
+	if err != nil || chatQueryDto.Account != boUserInfo.Account {
+		ctrl.logger.Error(xerrors.Errorf("Conn ValidateUser error : %w", err))
+		return
+	}
 
 	// test concurrent code
-	boUserInfo := &bo.UserInfo{
-		Id:       0,
-		Account:  chatQueryDto.Account,
-		Password: "test1234",
-		Nickname: chatQueryDto.Account,
-		CreateAt: time.Now(),
-		UpdateAt: time.Now(),
-	}
+	//boUserInfo := &bo.UserInfo{
+	//	Id:       0,
+	//	Account:  chatQueryDto.Account,
+	//	Password: "test1234",
+	//	Nickname: chatQueryDto.Account,
+	//	CreateAt: time.Now(),
+	//	UpdateAt: time.Now(),
+	//}
 
 	conn, err := ctrl.defaultUpgrade().Upgrade(ctx.Writer, ctx.Request, nil)
 
