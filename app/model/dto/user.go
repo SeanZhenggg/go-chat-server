@@ -7,11 +7,17 @@ type UserCondDto struct {
 }
 
 type UserDto struct {
-	Id       uint      `json:"id"`
-	Account  string    `json:"account"`
-	Nickname string    `json:"nickname"`
-	CreateAt time.Time `json:"create_at"`
-	UpdateAt time.Time `json:"update_at"`
+	Id          uint      `json:"id"`
+	Account     string    `json:"account"`
+	Nickname    string    `json:"nickname"`
+	Birthdate   time.Time `json:"birthdate"`
+	Gender      int       `json:"gender"`
+	Country     string    `json:"country"`
+	Address     string    `json:"address"`
+	RegionCode  string    `json:"region_code"`
+	PhoneNumber string    `json:"phone_number"`
+	CreateAt    time.Time `json:"create_at"`
+	UpdateAt    time.Time `json:"update_at"`
 }
 
 type UserRegDto struct {

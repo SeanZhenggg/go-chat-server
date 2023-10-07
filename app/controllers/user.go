@@ -40,11 +40,17 @@ func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
 
 	for _, boUser := range boUserList {
 		dtoUserList = append(dtoUserList, &dto.UserDto{
-			Id:       boUser.Id,
-			Account:  boUser.Account,
-			Nickname: boUser.Nickname,
-			CreateAt: boUser.CreateAt,
-			UpdateAt: boUser.UpdateAt,
+			//Id:       boUser.Id,
+			Account:     boUser.Account,
+			Nickname:    boUser.Nickname,
+			Birthdate:   boUser.Birthdate,
+			Gender:      boUser.Gender,
+			Country:     boUser.Country,
+			Address:     boUser.Address,
+			RegionCode:  boUser.RegionCode,
+			PhoneNumber: boUser.PhoneNumber,
+			CreateAt:    boUser.CreateAt,
+			UpdateAt:    boUser.UpdateAt,
 		})
 	}
 

@@ -68,12 +68,18 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.UserCond) (*bo.Use
 	}
 
 	user := &bo.UserInfo{
-		Id:       poUser.Id,
-		Account:  poUser.Account,
-		Password: poUser.Password,
-		Nickname: poUser.Nickname,
-		CreateAt: poUser.CreateAt,
-		UpdateAt: poUser.UpdateAt,
+		Id:          poUser.Id,
+		Account:     poUser.Account,
+		Password:    poUser.Password,
+		Nickname:    poUser.Nickname,
+		Birthdate:   poUser.Birthdate,
+		Gender:      poUser.Gender,
+		Country:     poUser.Country,
+		Address:     poUser.Address,
+		RegionCode:  poUser.RegionCode,
+		PhoneNumber: poUser.PhoneNumber,
+		CreateAt:    poUser.CreateAt,
+		UpdateAt:    poUser.UpdateAt,
 	}
 
 	return user, nil
