@@ -28,8 +28,8 @@ func (respMw *ResponseMiddleware) ResponseHandler(ctx *gin.Context) {
 }
 
 func (respMw *ResponseMiddleware) generateStandardResponse(ctx *gin.Context) response {
-	status := ctx.GetInt(Resp_Status)
-	data := ctx.MustGet(Resp_Data)
+	status := ctx.GetInt(RespStatus)
+	data := ctx.MustGet(RespData)
 	var code int
 	var message string
 
@@ -58,7 +58,7 @@ func (respMw *ResponseMiddleware) generateStandardResponse(ctx *gin.Context) res
 func (respMw *ResponseMiddleware) standardResponse(ctx *gin.Context) {
 	response := respMw.generateStandardResponse(ctx)
 
-	respStatus := ctx.GetInt(Resp_Status)
+	respStatus := ctx.GetInt(RespStatus)
 
 	ctx.JSON(
 		respStatus,
