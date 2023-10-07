@@ -10,8 +10,8 @@ create table users
     address      varchar(100),
     region_code  varchar(10),
     phone_number varchar(20),
-    create_at    timestamp(0) default now() not null,
-    update_at    timestamp(0) default now() not null
+    create_at    timestamp(0) with time zone default now() not null,
+    update_at    timestamp(0) with time zone default now() not null
 );
 
 create table user_hobbies
@@ -19,8 +19,8 @@ create table user_hobbies
     id        serial primary key,
     user_id   int                        not null,
     hobby     varchar(50),
-    create_at timestamp(0) default now() not null,
-    update_at timestamp(0) default now() not null
+    create_at timestamp(0) with time zone default now() not null,
+    update_at timestamp(0) with time zone default now() not null
 );
 
 create table user_jobs
@@ -28,8 +28,8 @@ create table user_jobs
     id        serial primary key,
     user_id   int                        not null,
     job       varchar(50),
-    create_at timestamp(0) default now() not null,
-    update_at timestamp(0) default now() not null
+    create_at timestamp(0) with time zone default now() not null,
+    update_at timestamp(0) with time zone default now() not null
 );
 
 create or replace
