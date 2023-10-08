@@ -1,4 +1,4 @@
-package controllers
+package middleware
 
 import (
 	"chat/app/utils/errortool"
@@ -6,6 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	RespData   = "Resp_Data"
+	RespStatus = "Resp_Status"
 )
 
 type IResponseMiddleware interface {
@@ -64,6 +69,11 @@ func (respMw *ResponseMiddleware) standardResponse(ctx *gin.Context) {
 		respStatus,
 		response,
 	)
+}
+
+func SetResp(ctx *gin.Context, statusCode int, data interface{}) {
+	ctx.Set(RespStatus, statusCode)
+	ctx.Set(RespData, data)
 }
 
 type response struct {

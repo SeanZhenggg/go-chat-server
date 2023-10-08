@@ -2,6 +2,7 @@ package web
 
 import (
 	"chat/app/controllers"
+	"chat/app/controllers/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,17 +13,20 @@ type IWebApp interface {
 
 func ProvideWebApp(
 	ctrl *controllers.Controller,
-	mw controllers.IResponseMiddleware,
+	respMw middleware.IResponseMiddleware,
+	authMw middleware.IAuthMiddleware,
 ) *webApp {
 	return &webApp{
-		Ctrl: ctrl,
-		Mw:   mw,
+		Ctrl:   ctrl,
+		RespMw: respMw,
+		AuthMw: authMw,
 	}
 }
 
 type webApp struct {
-	Ctrl *controllers.Controller
-	Mw   controllers.IResponseMiddleware
+	Ctrl   *controllers.Controller
+	RespMw middleware.IResponseMiddleware
+	AuthMw middleware.IAuthMiddleware
 }
 
 func (app *webApp) Init(g *gin.Engine) {
