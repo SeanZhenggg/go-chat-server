@@ -5,18 +5,17 @@ import (
 )
 
 type User struct {
-	Id          uint      `gorm:"id"`
-	Account     string    `gorm:"account"`
-	Password    string    `gorm:"password"`
-	Birthdate   time.Time `gorm:"birthdate"`
-	Gender      int       `gorm:"gender"`
-	Country     string    `gorm:"country"`
-	Address     string    `gorm:"address"`
-	RegionCode  string    `gorm:"region_code"`
-	PhoneNumber string    `gorm:"phone_number"`
-	Nickname    string    `gorm:"nickname"`
-	CreateAt    time.Time `gorm:"column:create_at;autoCreateTime"`
-	UpdateAt    time.Time `gorm:"column:update_at;autoUpdateTime"`
+	BaseId
+	Account     string     `gorm:"column:account"`
+	Password    string     `gorm:"column:password"`
+	Birthdate   *time.Time `gorm:"column:birthdate"`
+	Gender      int        `gorm:"column:gender"`
+	Country     string     `gorm:"column:country"`
+	Address     string     `gorm:"column:address"`
+	RegionCode  string     `gorm:"column:region_code"`
+	PhoneNumber string     `gorm:"column:phone_number"`
+	Nickname    string     `gorm:"column:nickname"`
+	BaseTimeColumns
 }
 
 func (User) TableName() string {
@@ -28,24 +27,24 @@ type GetUserCond struct {
 }
 
 type UserRegCond struct {
-	Account  string `gorm:"account"`
-	Password string `gorm:"password"`
-	Nickname string `gorm:"nickname"`
+	Account  string
+	Password string
+	Nickname string
 }
 
 type UserLoginCond struct {
-	Account  string `gorm:"password"`
-	Password string `gorm:"nickname"`
+	Account  string
+	Password string
 }
 
 type UpdateUserInfoCond struct {
-	Id          uint      `gorm:"id"`
-	Password    string    `gorm:"password"`
-	Birthdate   time.Time `gorm:"birthdate"`
-	Gender      int       `gorm:"gender"`
-	Country     string    `gorm:"country"`
-	Address     string    `gorm:"address"`
-	RegionCode  string    `gorm:"region_code"`
-	PhoneNumber string    `gorm:"phone_number"`
-	Nickname    string    `gorm:"nickname"`
+	BaseId
+	Password    string    `gorm:"column:password"`
+	Birthdate   time.Time `gorm:"column:birthdate"`
+	Gender      int       `gorm:"column:gender"`
+	Country     string    `gorm:"column:country"`
+	Address     string    `gorm:"column:address"`
+	RegionCode  string    `gorm:"column:region_code"`
+	PhoneNumber string    `gorm:"column:phone_number"`
+	Nickname    string    `gorm:"column:nickname"`
 }
