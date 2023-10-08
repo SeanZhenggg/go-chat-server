@@ -40,14 +40,17 @@ type UserValidateCond struct {
 	Token string
 }
 
+type UpdateUserInfoIdCond struct {
+	Id uint
+}
+
 type UpdateUserInfoCond struct {
-	Id          uint
-	Password    string
-	Nickname    string
-	Birthdate   time.Time
-	Gender      int
-	Country     string
-	Address     string
-	RegionCode  string
-	PhoneNumber string
+	Password    *string
+	Nickname    *string
+	Birthdate   *time.Time
+	Gender      *int
+	Country     *string
+	Address     *string
+	RegionCode  *string
+	PhoneNumber *string
 }

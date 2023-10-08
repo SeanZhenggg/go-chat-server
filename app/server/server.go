@@ -19,7 +19,7 @@ func NewAppServer() *appServer {
 	iUserRepo := repository.ProvideUserRepo(iPostgresDB)
 	iUserSrv := service.ProvideUserSrv(iUserRepo)
 	iHubSrv := service.ProvideHubSrv(iLogger)
-	iUserCtrl := controllers.ProvideUserCtrl(iUserSrv)
+	iUserCtrl := controllers.ProvideUserCtrl(iUserSrv, iLogger)
 	iChatCtrl := controllers.ProvideChatCtrl(iHubSrv, iUserSrv, iLogger)
 	iCtrls := controllers.ProvideControllers(iUserCtrl, iChatCtrl)
 	iWebApp := web.ProvideWebApp(iCtrls, iRespMiddleware, iAuthMiddleware)

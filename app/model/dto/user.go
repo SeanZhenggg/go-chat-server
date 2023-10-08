@@ -1,7 +1,5 @@
 package dto
 
-import "time"
-
 type GetUserCond struct {
 	Account string `uri:"account"`
 }
@@ -40,12 +38,12 @@ type UpdateUserIdCond struct {
 }
 
 type UpdateUserInfoCond struct {
-	Password    string    `json:"password"`
-	Nickname    string    `json:"nickname"`
-	Birthdate   time.Time `json:"birthdate"`
-	Gender      int       `json:"gender"`
-	Country     string    `json:"country"`
-	Address     string    `json:"address"`
-	RegionCode  string    `json:"region_code"`
-	PhoneNumber string    `json:"phone_number"`
+	Password    *string `json:"password"`
+	Nickname    *string `json:"nickname"`
+	Birthdate   *string `json:"birthdate"`
+	Gender      *int    `json:"gender"`
+	Country     *string `json:"country"`
+	Address     *string `json:"address"`
+	RegionCode  *string `json:"region_code"`
+	PhoneNumber *string `json:"phone_number"`
 }

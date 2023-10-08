@@ -15,7 +15,7 @@ type IUserSrv interface {
 	GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 	GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.UserInfo, error)
 	UserLogin(ctx context.Context, data *bo.UserLoginCond) (*bo.UserLoginResp, error)
-	UpdateUserInfo(ctx context.Context, data *bo.UpdateUserInfoCond) error
+	UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserInfoIdCond, data *bo.UpdateUserInfoCond) error
 	UserRegister(ctx context.Context, data *bo.UserRegCond) error
 	ValidateUser(ctx context.Context, data *bo.UserValidateCond) (*bo.UserInfo, error)
 }
@@ -41,6 +41,7 @@ func (srv *userService) GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 			Id:          poUser.Id,
 			Account:     poUser.Account,
 			Password:    poUser.Password,
+			Birthdate:   poUser.Birthdate,
 			Nickname:    poUser.Nickname,
 			Gender:      poUser.Gender,
 			Country:     poUser.Country,
@@ -49,10 +50,6 @@ func (srv *userService) GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 			PhoneNumber: poUser.PhoneNumber,
 			CreateAt:    poUser.CreateAt,
 			UpdateAt:    poUser.UpdateAt,
-		}
-
-		if poUser.Birthdate != nil {
-			users[i].Birthdate = *poUser.Birthdate
 		}
 	}
 
@@ -74,6 +71,7 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 		Id:          poUser.Id,
 		Account:     poUser.Account,
 		Password:    poUser.Password,
+		Birthdate:   poUser.Birthdate,
 		Nickname:    poUser.Nickname,
 		Gender:      poUser.Gender,
 		Country:     poUser.Country,
@@ -82,9 +80,6 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 		PhoneNumber: poUser.PhoneNumber,
 		CreateAt:    poUser.CreateAt,
 		UpdateAt:    poUser.UpdateAt,
-	}
-	if poUser.Birthdate != nil {
-		user.Birthdate = *poUser.Birthdate
 	}
 
 	return user, nil
@@ -121,7 +116,10 @@ func (srv *userService) UserRegister(ctx context.Context, data *bo.UserRegCond) 
 	poUserReg := &po.UserRegCond{
 		Account:  data.Account,
 		Password: data.Password,
-		Nickname: data.Nickname,
+	}
+
+	if data.Nickname != "" {
+		poUserReg.Nickname = data.Nickname
 	}
 
 	if err := srv.userRepo.UserRegister(ctx, poUserReg); err != nil {
@@ -151,7 +149,7 @@ func (srv *userService) ValidateUser(ctx context.Context, data *bo.UserValidateC
 		Id:       poUser.Id,
 		Account:  poUser.Account,
 		Password: poUser.Password,
-		Nickname: poUser.Nickname,
+		//Nickname: *poUser.Nickname,
 		CreateAt: poUser.CreateAt,
 		UpdateAt: poUser.UpdateAt,
 	}
@@ -159,12 +157,18 @@ func (srv *userService) ValidateUser(ctx context.Context, data *bo.UserValidateC
 	return user, nil
 }
 
-func (srv *userService) UpdateUserInfo(ctx context.Context, data *bo.UpdateUserInfoCond) error {
-	poUser := &po.UpdateUserInfoCond{
+func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserInfoIdCond, data *bo.UpdateUserInfoCond) error {
+	if data.Password != nil && *data.Password == "" {
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.PasswordRequiredError)
+	}
+
+	poUpdateUserInfoIdCond := &po.UpdateUserInfoIdCond{
 		BaseId: po.BaseId{
-			Id: data.Id,
+			Id: cond.Id,
 		},
-		Password:    data.Password,
+	}
+
+	poUser := &po.UpdateUserInfoCond{
 		Nickname:    data.Nickname,
 		Birthdate:   data.Birthdate,
 		Gender:      data.Gender,
@@ -174,7 +178,11 @@ func (srv *userService) UpdateUserInfo(ctx context.Context, data *bo.UpdateUserI
 		PhoneNumber: data.PhoneNumber,
 	}
 
-	if err := srv.userRepo.UpdateUserInfo(ctx, poUser); err != nil {
+	if data.Password != nil && *data.Password != "" {
+		poUser.Password = data.Password
+	}
+
+	if err := srv.userRepo.UpdateUserInfo(ctx, poUpdateUserInfoIdCond, poUser); err != nil {
 		return xerrors.Errorf("userService UpdateUserInfo error! : %w", err)
 	}
 

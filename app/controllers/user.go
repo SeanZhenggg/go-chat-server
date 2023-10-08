@@ -5,6 +5,8 @@ import (
 	"chat/app/model/dto"
 	"chat/app/service"
 	"chat/app/utils/errortool"
+	"chat/app/utils/logger"
+	"golang.org/x/xerrors"
 	"net/http"
 	"strconv"
 	"time"
@@ -20,15 +22,17 @@ type IUserCtrl interface {
 	PostUpdateUserInfo(ctx *gin.Context)
 }
 
-func ProvideUserCtrl(userSrv service.IUserSrv) IUserCtrl {
+func ProvideUserCtrl(userSrv service.IUserSrv, logger logger.ILogger) IUserCtrl {
 	return &UserCtrl{
 		userSrv: userSrv,
+		logger:  logger,
 	}
 }
 
 type UserCtrl struct {
 	userSrv     service.IUserSrv
 	SetResponse *StandardResponse
+	logger      logger.ILogger
 }
 
 func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
@@ -155,34 +159,51 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 	dtoUpdateUserIdCond := &dto.UpdateUserIdCond{}
 	err := ctx.BindUri(dtoUpdateUserIdCond)
 	if err != nil {
+		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo ctx.BindUri error: %w", err))
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
-	intId, err := strconv.ParseInt(dtoUpdateUserIdCond.Id, 10, 64)
+	intId, err := strconv.ParseUint(dtoUpdateUserIdCond.Id, 10, 64)
 	if err != nil || intId == 0 {
+		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo strconv.ParseUint error: %w", err))
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
+	}
+	boUpdateUserInfoIdCond := &bo.UpdateUserInfoIdCond{
+		Id: uint(intId),
 	}
 
 	dtoUpdateUserInfoCond := &dto.UpdateUserInfoCond{}
 	if err := ctx.ShouldBindJSON(dtoUpdateUserInfoCond); err != nil {
+		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo ctx.ShouldBindJSON error: %w", err))
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		return
+	}
+
+	var birthdate *time.Time
+	if bd, err := time.Parse(*dtoUpdateUserInfoCond.Birthdate, time.DateOnly); err != nil {
+		birthdate = &bd
+		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo time.Parse error: %w", err))
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
 	boUpdateUserInfoCond := &bo.UpdateUserInfoCond{
-		Id:          uint(intId),
-		Password:    dtoUpdateUserInfoCond.Password,
 		Nickname:    dtoUpdateUserInfoCond.Nickname,
-		Birthdate:   dtoUpdateUserInfoCond.Birthdate,
+		Birthdate:   birthdate,
 		Gender:      dtoUpdateUserInfoCond.Gender,
 		Country:     dtoUpdateUserInfoCond.Country,
-		Address:     dtoUpdateUserInfoCond.Country,
+		Address:     dtoUpdateUserInfoCond.Address,
 		RegionCode:  dtoUpdateUserInfoCond.RegionCode,
 		PhoneNumber: dtoUpdateUserInfoCond.PhoneNumber,
 	}
-	if err := ctrl.userSrv.UpdateUserInfo(ctx, boUpdateUserInfoCond); err != nil {
+
+	if dtoUpdateUserInfoCond.Password != nil {
+		boUpdateUserInfoCond.Password = dtoUpdateUserInfoCond.Password
+	}
+
+	if err := ctrl.userSrv.UpdateUserInfo(ctx, boUpdateUserInfoIdCond, boUpdateUserInfoCond); err != nil {
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, err)
 		return
 	}

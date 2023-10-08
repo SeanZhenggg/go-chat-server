@@ -14,7 +14,7 @@ type IUserRepo interface {
 	GetUser(ctx context.Context, cond *po.GetUserCond) (*po.User, error)
 	UserRegister(ctx context.Context, cond *po.UserRegCond) error
 	UserLogin(ctx context.Context, cond *po.UserLoginCond) (*po.User, error)
-	UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoCond) error
+	UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoIdCond, data *po.UpdateUserInfoCond) error
 }
 
 type userRepo struct {
@@ -49,7 +49,11 @@ func (repo *userRepo) GetUser(ctx context.Context, cond *po.GetUserCond) (*po.Us
 
 func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegCond) error {
 	db := repo.db.Session()
-	if err := db.Select("account", "password", "nickname").Create(&po.User{Account: cond.Account, Password: cond.Password, Nickname: cond.Nickname}).Error; err != nil {
+	if err := db.Create(&po.User{
+		Account:  cond.Account,
+		Password: cond.Password,
+		Nickname: cond.Nickname,
+	}).Error; err != nil {
 		return xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
 	}
 
@@ -69,12 +73,12 @@ func (repo *userRepo) UserLogin(ctx context.Context, cond *po.UserLoginCond) (*p
 	return user, nil
 }
 
-func (repo *userRepo) UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoCond) error {
+func (repo *userRepo) UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoIdCond, data *po.UpdateUserInfoCond) error {
 	db := repo.db.Session()
-
-	if err := db.Model(&po.User{}).
+	if err := db.
+		Model(&po.User{}).
 		Where("id = ?", cond.Id).
-		Updates(cond).Error; err != nil {
+		Updates(data).Error; err != nil {
 		return xerrors.Errorf("userRepo UpdateUserInfo error ! : %w", errortool.ParseDBError(err))
 	}
 
