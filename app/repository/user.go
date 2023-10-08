@@ -49,9 +49,7 @@ func (repo *userRepo) GetUser(ctx context.Context, cond *po.GetUserCond) (*po.Us
 
 func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegCond) error {
 	db := repo.db.Session()
-	if err := db.Select("Account", "Password", "Nickname").
-		Create(&po.User{Account: cond.Account, Password: cond.Password, Nickname: cond.Nickname}).
-		Error; err != nil {
+	if err := db.Select("account", "password", "nickname").Create(&po.User{Account: cond.Account, Password: cond.Password, Nickname: cond.Nickname}).Error; err != nil {
 		return xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
 	}
 
@@ -76,16 +74,7 @@ func (repo *userRepo) UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInf
 
 	if err := db.Model(&po.User{}).
 		Where("id = ?", cond.Id).
-		Updates(po.User{
-			Password:    cond.Password,
-			Nickname:    cond.Nickname,
-			Birthdate:   cond.Birthdate,
-			Gender:      cond.Gender,
-			Country:     cond.Country,
-			Address:     cond.Address,
-			RegionCode:  cond.RegionCode,
-			PhoneNumber: cond.PhoneNumber,
-		}).Error; err != nil {
+		Updates(cond).Error; err != nil {
 		return xerrors.Errorf("userRepo UpdateUserInfo error ! : %w", errortool.ParseDBError(err))
 	}
 

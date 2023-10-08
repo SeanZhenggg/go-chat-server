@@ -6,6 +6,7 @@ import (
 	"chat/app/service"
 	"chat/app/utils/errortool"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -40,19 +41,25 @@ func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
 	}
 
 	for _, boUser := range boUserList {
-		dtoUserList = append(dtoUserList, &dto.UserInfoResp{
-			//Id:       boUser.Id,
+		userInfoResp := &dto.UserInfoResp{
+			Id:          boUser.Id,
 			Account:     boUser.Account,
 			Nickname:    boUser.Nickname,
-			Birthdate:   boUser.Birthdate,
 			Gender:      boUser.Gender,
 			Country:     boUser.Country,
 			Address:     boUser.Address,
 			RegionCode:  boUser.RegionCode,
 			PhoneNumber: boUser.PhoneNumber,
-			CreateAt:    boUser.CreateAt,
-			UpdateAt:    boUser.UpdateAt,
-		})
+			CreateAt:    boUser.CreateAt.Format(time.DateTime),
+			UpdateAt:    boUser.UpdateAt.Format(time.DateTime),
+		}
+		if boUser.Birthdate.IsZero() {
+			userInfoResp.Birthdate = ""
+		} else {
+			userInfoResp.Birthdate = boUser.Birthdate.Format(time.DateOnly)
+		}
+		dtoUserList = append(dtoUserList, userInfoResp)
+
 	}
 
 	ctrl.SetResponse.SetStandardResponse(ctx, http.StatusOK, dtoUserList)
@@ -75,11 +82,21 @@ func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
 	}
 
 	dtoUser := &dto.UserInfoResp{
-		Id:       boUser.Id,
-		Account:  boUser.Account,
-		Nickname: boUser.Nickname,
-		CreateAt: boUser.CreateAt,
-		UpdateAt: boUser.UpdateAt,
+		Id:          boUser.Id,
+		Account:     boUser.Account,
+		Nickname:    boUser.Nickname,
+		Gender:      boUser.Gender,
+		Country:     boUser.Country,
+		Address:     boUser.Address,
+		RegionCode:  boUser.RegionCode,
+		PhoneNumber: boUser.PhoneNumber,
+		CreateAt:    boUser.CreateAt.Format(time.DateTime),
+		UpdateAt:    boUser.UpdateAt.Format(time.DateTime),
+	}
+	if boUser.Birthdate.IsZero() {
+		dtoUser.Birthdate = ""
+	} else {
+		dtoUser.Birthdate = boUser.Birthdate.Format(time.DateOnly)
 	}
 
 	ctrl.SetResponse.SetStandardResponse(ctx, http.StatusOK, dtoUser)
@@ -134,8 +151,16 @@ func (ctrl *UserCtrl) PostUserRegister(ctx *gin.Context) {
 }
 
 func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
+
 	dtoUpdateUserIdCond := &dto.UpdateUserIdCond{}
-	if err := ctx.BindUri(dtoUpdateUserIdCond); err != nil {
+	err := ctx.BindUri(dtoUpdateUserIdCond)
+	if err != nil {
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		return
+	}
+
+	intId, err := strconv.ParseInt(dtoUpdateUserIdCond.Id, 10, 64)
+	if err != nil || intId == 0 {
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
@@ -147,7 +172,7 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 	}
 
 	boUpdateUserInfoCond := &bo.UpdateUserInfoCond{
-		Id:          dtoUpdateUserIdCond.Id,
+		Id:          uint(intId),
 		Password:    dtoUpdateUserInfoCond.Password,
 		Nickname:    dtoUpdateUserInfoCond.Nickname,
 		Birthdate:   dtoUpdateUserInfoCond.Birthdate,

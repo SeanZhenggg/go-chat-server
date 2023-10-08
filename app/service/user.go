@@ -1,15 +1,14 @@
 package service
 
 import (
-	"chat/app/utils/errortool"
-	"context"
-	"errors"
-	"golang.org/x/xerrors"
-
 	"chat/app/model/bo"
 	"chat/app/model/po"
 	"chat/app/repository"
 	"chat/app/utils/auth"
+	"chat/app/utils/errortool"
+	"context"
+	"errors"
+	"golang.org/x/xerrors"
 )
 
 type IUserSrv interface {
@@ -43,7 +42,6 @@ func (srv *userService) GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 			Account:     poUser.Account,
 			Password:    poUser.Password,
 			Nickname:    poUser.Nickname,
-			Birthdate:   poUser.Birthdate,
 			Gender:      poUser.Gender,
 			Country:     poUser.Country,
 			Address:     poUser.Address,
@@ -51,6 +49,10 @@ func (srv *userService) GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 			PhoneNumber: poUser.PhoneNumber,
 			CreateAt:    poUser.CreateAt,
 			UpdateAt:    poUser.UpdateAt,
+		}
+
+		if poUser.Birthdate != nil {
+			users[i].Birthdate = *poUser.Birthdate
 		}
 	}
 
@@ -73,7 +75,6 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 		Account:     poUser.Account,
 		Password:    poUser.Password,
 		Nickname:    poUser.Nickname,
-		Birthdate:   poUser.Birthdate,
 		Gender:      poUser.Gender,
 		Country:     poUser.Country,
 		Address:     poUser.Address,
@@ -81,6 +82,9 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 		PhoneNumber: poUser.PhoneNumber,
 		CreateAt:    poUser.CreateAt,
 		UpdateAt:    poUser.UpdateAt,
+	}
+	if poUser.Birthdate != nil {
+		user.Birthdate = *poUser.Birthdate
 	}
 
 	return user, nil
@@ -157,7 +161,9 @@ func (srv *userService) ValidateUser(ctx context.Context, data *bo.UserValidateC
 
 func (srv *userService) UpdateUserInfo(ctx context.Context, data *bo.UpdateUserInfoCond) error {
 	poUser := &po.UpdateUserInfoCond{
-		Id:          data.Id,
+		BaseId: po.BaseId{
+			Id: data.Id,
+		},
 		Password:    data.Password,
 		Nickname:    data.Nickname,
 		Birthdate:   data.Birthdate,
