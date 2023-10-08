@@ -11,9 +11,10 @@ import (
 
 type IUserRepo interface {
 	GetUserList(ctx context.Context) ([]*po.User, error)
-	GetUser(ctx context.Context, cond *po.UserCond) (*po.User, error)
-	UserRegister(ctx context.Context, cond *po.UserRegData) error
-	UserLogin(ctx context.Context, cond *po.UserLoginData) (*po.User, error)
+	GetUser(ctx context.Context, cond *po.GetUserCond) (*po.User, error)
+	UserRegister(ctx context.Context, cond *po.UserRegCond) error
+	UserLogin(ctx context.Context, cond *po.UserLoginCond) (*po.User, error)
+	UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoCond) error
 }
 
 type userRepo struct {
@@ -35,7 +36,7 @@ func (repo *userRepo) GetUserList(ctx context.Context) ([]*po.User, error) {
 	return userList, nil
 }
 
-func (repo *userRepo) GetUser(ctx context.Context, cond *po.UserCond) (*po.User, error) {
+func (repo *userRepo) GetUser(ctx context.Context, cond *po.GetUserCond) (*po.User, error) {
 	user := &po.User{}
 
 	db := repo.db.Session()
@@ -46,7 +47,7 @@ func (repo *userRepo) GetUser(ctx context.Context, cond *po.UserCond) (*po.User,
 	return user, nil
 }
 
-func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegData) error {
+func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegCond) error {
 	db := repo.db.Session()
 	if err := db.Select("Account", "Password", "Nickname").
 		Create(&po.User{Account: cond.Account, Password: cond.Password, Nickname: cond.Nickname}).
@@ -57,7 +58,7 @@ func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegData) er
 	return nil
 }
 
-func (repo *userRepo) UserLogin(ctx context.Context, cond *po.UserLoginData) (*po.User, error) {
+func (repo *userRepo) UserLogin(ctx context.Context, cond *po.UserLoginCond) (*po.User, error) {
 	user := &po.User{}
 
 	db := repo.db.Session()
@@ -68,4 +69,25 @@ func (repo *userRepo) UserLogin(ctx context.Context, cond *po.UserLoginData) (*p
 	}
 
 	return user, nil
+}
+
+func (repo *userRepo) UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoCond) error {
+	db := repo.db.Session()
+
+	if err := db.Model(&po.User{}).
+		Where("id = ?", cond.Id).
+		Updates(po.User{
+			Password:    cond.Password,
+			Nickname:    cond.Nickname,
+			Birthdate:   cond.Birthdate,
+			Gender:      cond.Gender,
+			Country:     cond.Country,
+			Address:     cond.Address,
+			RegionCode:  cond.RegionCode,
+			PhoneNumber: cond.PhoneNumber,
+		}).Error; err != nil {
+		return xerrors.Errorf("userRepo UpdateUserInfo error ! : %w", errortool.ParseDBError(err))
+	}
+
+	return nil
 }

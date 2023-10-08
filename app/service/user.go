@@ -14,9 +14,10 @@ import (
 
 type IUserSrv interface {
 	GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
-	GetUser(ctx context.Context, cond *bo.UserCond) (*bo.UserInfo, error)
-	UserLogin(ctx context.Context, data *bo.UserLoginData) (*bo.UserLoginResp, error)
-	UserRegister(ctx context.Context, data *bo.UserRegData) error
+	GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.UserInfo, error)
+	UserLogin(ctx context.Context, data *bo.UserLoginCond) (*bo.UserLoginResp, error)
+	UpdateUserInfo(ctx context.Context, data *bo.UpdateUserInfoCond) error
+	UserRegister(ctx context.Context, data *bo.UserRegCond) error
 	ValidateUser(ctx context.Context, data *bo.UserValidateCond) (*bo.UserInfo, error)
 }
 
@@ -56,8 +57,8 @@ func (srv *userService) GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 	return users, nil
 }
 
-func (srv *userService) GetUser(ctx context.Context, cond *bo.UserCond) (*bo.UserInfo, error) {
-	poUserCond := &po.UserCond{
+func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.UserInfo, error) {
+	poUserCond := &po.GetUserCond{
 		Account: cond.Account,
 	}
 
@@ -85,8 +86,8 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.UserCond) (*bo.Use
 	return user, nil
 }
 
-func (srv *userService) UserLogin(ctx context.Context, data *bo.UserLoginData) (*bo.UserLoginResp, error) {
-	poUserLogin := &po.UserLoginData{
+func (srv *userService) UserLogin(ctx context.Context, data *bo.UserLoginCond) (*bo.UserLoginResp, error) {
+	poUserLogin := &po.UserLoginCond{
 		Account:  data.Account,
 		Password: data.Password,
 	}
@@ -112,8 +113,8 @@ func (srv *userService) UserLogin(ctx context.Context, data *bo.UserLoginData) (
 	return userLoginResp, nil
 }
 
-func (srv *userService) UserRegister(ctx context.Context, data *bo.UserRegData) error {
-	poUserReg := &po.UserRegData{
+func (srv *userService) UserRegister(ctx context.Context, data *bo.UserRegCond) error {
+	poUserReg := &po.UserRegCond{
 		Account:  data.Account,
 		Password: data.Password,
 		Nickname: data.Nickname,
@@ -135,7 +136,7 @@ func (srv *userService) ValidateUser(ctx context.Context, data *bo.UserValidateC
 		return nil, xerrors.Errorf("userService ValidateUser TokenValidation error! : %w", err)
 	}
 
-	poUser, err := srv.userRepo.GetUser(ctx, &po.UserCond{
+	poUser, err := srv.userRepo.GetUser(ctx, &po.GetUserCond{
 		Account: userAccount,
 	})
 	if err != nil {
@@ -152,4 +153,24 @@ func (srv *userService) ValidateUser(ctx context.Context, data *bo.UserValidateC
 	}
 
 	return user, nil
+}
+
+func (srv *userService) UpdateUserInfo(ctx context.Context, data *bo.UpdateUserInfoCond) error {
+	poUser := &po.UpdateUserInfoCond{
+		Id:          data.Id,
+		Password:    data.Password,
+		Nickname:    data.Nickname,
+		Birthdate:   data.Birthdate,
+		Gender:      data.Gender,
+		Country:     data.Country,
+		Address:     data.Address,
+		RegionCode:  data.RegionCode,
+		PhoneNumber: data.PhoneNumber,
+	}
+
+	if err := srv.userRepo.UpdateUserInfo(ctx, poUser); err != nil {
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", err)
+	}
+
+	return nil
 }

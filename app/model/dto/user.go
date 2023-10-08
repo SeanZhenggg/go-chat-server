@@ -2,11 +2,11 @@ package dto
 
 import "time"
 
-type UserCondDto struct {
+type GetUserCond struct {
 	Account string `uri:"account"`
 }
 
-type UserDto struct {
+type UserInfoResp struct {
 	Id          uint      `json:"id"`
 	Account     string    `json:"account"`
 	Nickname    string    `json:"nickname"`
@@ -20,17 +20,32 @@ type UserDto struct {
 	UpdateAt    time.Time `json:"update_at"`
 }
 
-type UserRegDto struct {
+type UserRegCond struct {
 	Account  string `json:"account"`
 	Password string `json:"password"`
 	Nickname string `json:"nickname"`
 }
 
-type UserLoginDto struct {
+type UserLoginCond struct {
 	Account  string `json:"account"`
 	Password string `json:"password"`
 }
 
-type UserLoginRespDto struct {
+type UserLoginResp struct {
 	Token string `json:"token"`
+}
+
+type UpdateUserIdCond struct {
+	Id uint `json:"id"`
+}
+
+type UpdateUserInfoCond struct {
+	Password    string    `json:"password"`
+	Nickname    string    `json:"nickname"`
+	Birthdate   time.Time `json:"birthdate"`
+	Gender      int       `json:"gender"`
+	Country     string    `json:"country"`
+	Address     string    `json:"address"`
+	RegionCode  string    `json:"region_code"`
+	PhoneNumber string    `json:"phone_number"`
 }

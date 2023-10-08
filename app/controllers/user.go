@@ -16,6 +16,7 @@ type IUserCtrl interface {
 	GetUser(ctx *gin.Context)
 	PostUserLogin(ctx *gin.Context)
 	PostUserRegister(ctx *gin.Context)
+	PostUpdateUserInfo(ctx *gin.Context)
 }
 
 func ProvideUserCtrl(userSrv service.IUserSrv) IUserCtrl {
@@ -30,7 +31,7 @@ type UserCtrl struct {
 }
 
 func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
-	dtoUserList := make([]*dto.UserDto, 0)
+	dtoUserList := make([]*dto.UserInfoResp, 0)
 	boUserList, err := ctrl.userSrv.GetUserList(ctx)
 
 	if err != nil {
@@ -39,7 +40,7 @@ func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
 	}
 
 	for _, boUser := range boUserList {
-		dtoUserList = append(dtoUserList, &dto.UserDto{
+		dtoUserList = append(dtoUserList, &dto.UserInfoResp{
 			//Id:       boUser.Id,
 			Account:     boUser.Account,
 			Nickname:    boUser.Nickname,
@@ -58,13 +59,13 @@ func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
 }
 
 func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
-	dtoUserCond := &dto.UserCondDto{}
+	dtoUserCond := &dto.GetUserCond{}
 	if err := ctx.BindUri(dtoUserCond); err != nil {
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
-	boUserCond := &bo.UserCond{
+	boUserCond := &bo.GetUserCond{
 		Account: dtoUserCond.Account,
 	}
 	boUser, err := ctrl.userSrv.GetUser(ctx, boUserCond)
@@ -73,7 +74,7 @@ func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	dtoUser := &dto.UserDto{
+	dtoUser := &dto.UserInfoResp{
 		Id:       boUser.Id,
 		Account:  boUser.Account,
 		Nickname: boUser.Nickname,
@@ -85,14 +86,14 @@ func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
 }
 
 func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
-	dtoUserLogin := &dto.UserLoginDto{}
+	dtoUserLogin := &dto.UserLoginCond{}
 
 	if err := ctx.BindJSON(dtoUserLogin); err != nil {
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
-	boUserLogin := &bo.UserLoginData{
+	boUserLogin := &bo.UserLoginCond{
 		Account:  dtoUserLogin.Account,
 		Password: dtoUserLogin.Password,
 	}
@@ -103,7 +104,7 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 		return
 	}
 
-	dtoUserLoginResp := &dto.UserLoginRespDto{
+	dtoUserLoginResp := &dto.UserLoginResp{
 		Token: boUserLoginResp.Token,
 	}
 
@@ -113,18 +114,50 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 }
 
 func (ctrl *UserCtrl) PostUserRegister(ctx *gin.Context) {
-	dtoUserRegData := &dto.UserRegDto{}
-	if err := ctx.BindJSON(dtoUserRegData); err != nil {
+	dtoUserRegData := &dto.UserRegCond{}
+	if err := ctx.ShouldBindJSON(dtoUserRegData); err != nil {
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 		return
 	}
 
-	boUserReg := &bo.UserRegData{
+	boUserReg := &bo.UserRegCond{
 		Account:  dtoUserRegData.Account,
 		Password: dtoUserRegData.Password,
 		Nickname: dtoUserRegData.Nickname,
 	}
 	if err := ctrl.userSrv.UserRegister(ctx, boUserReg); err != nil {
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctrl.SetResponse.SetStandardResponse(ctx, http.StatusOK, nil)
+}
+
+func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
+	dtoUpdateUserIdCond := &dto.UpdateUserIdCond{}
+	if err := ctx.BindUri(dtoUpdateUserIdCond); err != nil {
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		return
+	}
+
+	dtoUpdateUserInfoCond := &dto.UpdateUserInfoCond{}
+	if err := ctx.ShouldBindJSON(dtoUpdateUserInfoCond); err != nil {
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		return
+	}
+
+	boUpdateUserInfoCond := &bo.UpdateUserInfoCond{
+		Id:          dtoUpdateUserIdCond.Id,
+		Password:    dtoUpdateUserInfoCond.Password,
+		Nickname:    dtoUpdateUserInfoCond.Nickname,
+		Birthdate:   dtoUpdateUserInfoCond.Birthdate,
+		Gender:      dtoUpdateUserInfoCond.Gender,
+		Country:     dtoUpdateUserInfoCond.Country,
+		Address:     dtoUpdateUserInfoCond.Country,
+		RegionCode:  dtoUpdateUserInfoCond.RegionCode,
+		PhoneNumber: dtoUpdateUserInfoCond.PhoneNumber,
+	}
+	if err := ctrl.userSrv.UpdateUserInfo(ctx, boUpdateUserInfoCond); err != nil {
 		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, err)
 		return
 	}

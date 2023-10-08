@@ -2,16 +2,16 @@ package bo
 
 import "time"
 
-type UserCond struct {
+type GetUserCond struct {
 	Account string
 }
 
-type UserLoginData struct {
+type UserLoginCond struct {
 	Account  string
 	Password string
 }
 
-type UserRegData struct {
+type UserRegCond struct {
 	Account  string
 	Password string
 	Nickname string
@@ -38,4 +38,16 @@ type UserLoginResp struct {
 
 type UserValidateCond struct {
 	Token string
+}
+
+type UpdateUserInfoCond struct {
+	Id          uint
+	Password    string
+	Nickname    string
+	Birthdate   time.Time
+	Gender      int
+	Country     string
+	Address     string
+	RegionCode  string
+	PhoneNumber string
 }
