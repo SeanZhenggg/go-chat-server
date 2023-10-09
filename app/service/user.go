@@ -5,6 +5,7 @@ import (
 	"chat/app/model/po"
 	"chat/app/repository"
 	"chat/app/utils/auth"
+	encryptUtil "chat/app/utils/encrypt"
 	"chat/app/utils/errortool"
 	"context"
 	"errors"
@@ -86,9 +87,13 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 }
 
 func (srv *userService) UserLogin(ctx context.Context, data *bo.UserLoginCond) (*bo.UserLoginResp, error) {
+	encrypted, err := encryptUtil.PasswordEncrypt(data.Password)
+	if err != nil {
+		return nil, xerrors.Errorf("userService UserLogin encrypt.EncryptPassword error! : %w", err)
+	}
 	poUserLogin := &po.UserLoginCond{
 		Account:  data.Account,
-		Password: data.Password,
+		Password: encrypted,
 	}
 
 	loggedinUser, err := srv.userRepo.UserLogin(ctx, poUserLogin)
@@ -113,13 +118,15 @@ func (srv *userService) UserLogin(ctx context.Context, data *bo.UserLoginCond) (
 }
 
 func (srv *userService) UserRegister(ctx context.Context, data *bo.UserRegCond) error {
-	poUserReg := &po.UserRegCond{
-		Account:  data.Account,
-		Password: data.Password,
+	encrypted, err := encryptUtil.PasswordEncrypt(data.Password)
+	if err != nil {
+		return xerrors.Errorf("userService UserRegister encrypt.EncryptPassword error! : %w", err)
 	}
 
-	if data.Nickname != "" {
-		poUserReg.Nickname = data.Nickname
+	poUserReg := &po.UserRegCond{
+		Account:  data.Account,
+		Password: encrypted,
+		Nickname: data.Nickname,
 	}
 
 	if err := srv.userRepo.UserRegister(ctx, poUserReg); err != nil {
