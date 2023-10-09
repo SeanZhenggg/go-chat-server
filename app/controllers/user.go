@@ -182,14 +182,17 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 	}
 
 	var birthdate *time.Time
-	if bd, err := time.Parse(*dtoUpdateUserInfoCond.Birthdate, time.DateOnly); err != nil {
-		birthdate = &bd
-		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo time.Parse error: %w", err))
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
-		return
+	if dtoUpdateUserInfoCond.Birthdate != nil {
+		if bd, err := time.Parse(*dtoUpdateUserInfoCond.Birthdate, time.DateOnly); err != nil {
+			birthdate = &bd
+			ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo time.Parse error: %w", err))
+			ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+			return
+		}
 	}
 
 	boUpdateUserInfoCond := &bo.UpdateUserInfoCond{
+		Password:    dtoUpdateUserInfoCond.Password,
 		Nickname:    dtoUpdateUserInfoCond.Nickname,
 		Birthdate:   birthdate,
 		Gender:      dtoUpdateUserInfoCond.Gender,
@@ -197,10 +200,6 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 		Address:     dtoUpdateUserInfoCond.Address,
 		RegionCode:  dtoUpdateUserInfoCond.RegionCode,
 		PhoneNumber: dtoUpdateUserInfoCond.PhoneNumber,
-	}
-
-	if dtoUpdateUserInfoCond.Password != nil {
-		boUpdateUserInfoCond.Password = dtoUpdateUserInfoCond.Password
 	}
 
 	if err := ctrl.userSrv.UpdateUserInfo(ctx, boUpdateUserInfoIdCond, boUpdateUserInfoCond); err != nil {

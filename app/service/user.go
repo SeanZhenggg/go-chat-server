@@ -162,13 +162,23 @@ func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserI
 		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.PasswordRequiredError)
 	}
 
-	poUpdateUserInfoIdCond := &po.UpdateUserInfoIdCond{
-		BaseId: po.BaseId{
-			Id: cond.Id,
-		},
+	if data.Gender != nil && *data.Gender < 1 || *data.Gender < 3 {
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.GenderMismatchError)
 	}
 
+	if data.Country != nil && len(*data.Country) > 3 {
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.CountryCodeError)
+	}
+
+	if data.RegionCode != nil && len(*data.RegionCode) > 10 {
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.CountryCodeError)
+	}
+
+	poUpdateUserInfoIdCond := &po.UpdateUserInfoIdCond{}
+	poUpdateUserInfoIdCond.Id = cond.Id
+
 	poUser := &po.UpdateUserInfoCond{
+		Password:    data.Password,
 		Nickname:    data.Nickname,
 		Birthdate:   data.Birthdate,
 		Gender:      data.Gender,
@@ -176,10 +186,6 @@ func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserI
 		Address:     data.Address,
 		RegionCode:  data.RegionCode,
 		PhoneNumber: data.PhoneNumber,
-	}
-
-	if data.Password != nil && *data.Password != "" {
-		poUser.Password = data.Password
 	}
 
 	if err := srv.userRepo.UpdateUserInfo(ctx, poUpdateUserInfoIdCond, poUser); err != nil {

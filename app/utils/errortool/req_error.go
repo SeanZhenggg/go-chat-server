@@ -12,6 +12,8 @@ func ProvideReqError(groups IGroupRepo, codes ICodeRepo) interface{} {
 		AccountOrPasswordError:          group.GenError(2, "帳號或密碼錯誤"),
 		AccountOrNicknameDuplicateError: group.GenError(3, "帳號或暱稱重複"),
 		PasswordRequiredError:           group.GenError(4, "密碼不得為空"),
+		GenderMismatchError:             group.GenError(5, "性別欄位只可為男性、女性或不公開"),
+		CountryCodeError:                group.GenError(5, "國籍輸入有誤"),
 	}
 }
 
@@ -20,4 +22,6 @@ type reqError struct {
 	AccountOrPasswordError          error
 	AccountOrNicknameDuplicateError error
 	PasswordRequiredError           error
+	GenderMismatchError             error
+	CountryCodeError                error
 }
