@@ -4,7 +4,7 @@ create table users
     account      varchar(50) unique not null,
     birthdate    date default null,
     gender       smallint default 1 check (gender >= 1 and gender <= 3),
-    password     varchar(50) not null,
+    password     varchar(256) not null,
     nickname     varchar(50),
     country_code varchar(10),
     address      varchar(100),
@@ -12,6 +12,16 @@ create table users
     create_at    timestamp(0) with time zone default now() not null,
     update_at    timestamp(0) with time zone default now() not null
 );
+
+INSERT INTO users (account,birthdate,gender,"password",nickname,country_code,address,phone_number,create_at,update_at) values
+('sean001',NULL,1,'test1234',NULL,NULL,NULL,NULL,'2023-10-07 23:37:22+08','2023-10-09 16:00:19+08'),
+('sean002',NULL,1,'test1234','Sean02',NULL,NULL,NULL,'2023-10-08 10:03:07+08','2023-10-08 10:03:07+08'),
+('sean003',NULL,1,'test1234','Sean03',NULL,NULL,NULL,'2023-10-08 11:23:03+08','2023-10-08 11:23:03+08'),
+('sean004',NULL,1,'test1234','Sean04',NULL,NULL,NULL,'2023-10-08 11:23:41+08','2023-10-08 11:23:41+08'),
+('sean005',NULL,1,'test1234','Sean05',NULL,NULL,NULL,'2023-10-08 11:42:34+08','2023-10-08 11:42:34+08'),
+('sean006',NULL,1,'test1234','Sean06',NULL,NULL,NULL,'2023-10-08 11:43:38+08','2023-10-08 11:43:38+08'),
+('sean007',NULL,1,'test1234','Sean07',NULL,NULL,NULL,'2023-10-08 13:23:02+08','2023-10-08 13:23:02+08');
+
 
 create table user_hobbies
 (
