@@ -183,12 +183,14 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 
 	var birthdate *time.Time
 	if dtoUpdateUserInfoCond.Birthdate != nil {
-		if bd, err := time.Parse(*dtoUpdateUserInfoCond.Birthdate, time.DateOnly); err != nil {
-			birthdate = &bd
+		bd, err := time.Parse(time.DateOnly, *dtoUpdateUserInfoCond.Birthdate)
+		if err != nil {
 			ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo time.Parse error: %w", err))
 			ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
 			return
 		}
+
+		birthdate = &bd
 	}
 
 	boUpdateUserInfoCond := &bo.UpdateUserInfoCond{

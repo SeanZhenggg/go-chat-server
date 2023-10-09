@@ -162,7 +162,7 @@ func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserI
 		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.PasswordRequiredError)
 	}
 
-	if data.Gender != nil && *data.Gender < 1 || *data.Gender < 3 {
+	if data.Gender != nil && *data.Gender < 1 || *data.Gender > 3 {
 		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.GenderMismatchError)
 	}
 
