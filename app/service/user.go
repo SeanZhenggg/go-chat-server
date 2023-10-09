@@ -45,9 +45,8 @@ func (srv *userService) GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 			Birthdate:   poUser.Birthdate,
 			Nickname:    poUser.Nickname,
 			Gender:      poUser.Gender,
-			Country:     poUser.Country,
+			CountryCode: poUser.CountryCode,
 			Address:     poUser.Address,
-			RegionCode:  poUser.RegionCode,
 			PhoneNumber: poUser.PhoneNumber,
 			CreateAt:    poUser.CreateAt,
 			UpdateAt:    poUser.UpdateAt,
@@ -75,9 +74,8 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 		Birthdate:   poUser.Birthdate,
 		Nickname:    poUser.Nickname,
 		Gender:      poUser.Gender,
-		Country:     poUser.Country,
+		CountryCode: poUser.CountryCode,
 		Address:     poUser.Address,
-		RegionCode:  poUser.RegionCode,
 		PhoneNumber: poUser.PhoneNumber,
 		CreateAt:    poUser.CreateAt,
 		UpdateAt:    poUser.UpdateAt,
@@ -173,11 +171,7 @@ func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserI
 		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.GenderMismatchError)
 	}
 
-	if data.Country != nil && len(*data.Country) > 3 {
-		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.CountryCodeError)
-	}
-
-	if data.RegionCode != nil && len(*data.RegionCode) > 10 {
+	if data.CountryCode != nil && len(*data.CountryCode) > 10 {
 		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.CountryCodeError)
 	}
 
@@ -189,9 +183,8 @@ func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserI
 		Nickname:    data.Nickname,
 		Birthdate:   data.Birthdate,
 		Gender:      data.Gender,
-		Country:     data.Country,
+		CountryCode: data.CountryCode,
 		Address:     data.Address,
-		RegionCode:  data.RegionCode,
 		PhoneNumber: data.PhoneNumber,
 	}
 

@@ -10,9 +10,8 @@ type UserInfoResp struct {
 	Nickname    string `json:"nickname"`
 	Birthdate   string `json:"birthdate"`
 	Gender      int    `json:"gender"`
-	Country     string `json:"country"`
+	CountryCode string `json:"country_code"`
 	Address     string `json:"address"`
-	RegionCode  string `json:"region_code"`
 	PhoneNumber string `json:"phone_number"`
 	CreateAt    string `json:"create_at"`
 	UpdateAt    string `json:"update_at"`
@@ -42,8 +41,7 @@ type UpdateUserInfoCond struct {
 	Nickname    *string `json:"nickname"`
 	Birthdate   *string `json:"birthdate"`
 	Gender      *int    `json:"gender"`
-	Country     *string `json:"country"`
+	CountryCode *string `json:"country_code"`
 	Address     *string `json:"address"`
-	RegionCode  *string `json:"region_code"`
 	PhoneNumber *string `json:"phone_number"`
 }

@@ -10,9 +10,8 @@ type User struct {
 	Password    string    `gorm:"column:password"`
 	Birthdate   time.Time `gorm:"column:birthdate;default:null"`
 	Gender      int       `gorm:"column:gender;default:1"`
-	Country     string    `gorm:"column:country;default:null"`
+	CountryCode string    `gorm:"column:country_code;default:null"`
 	Address     string    `gorm:"column:address;default:null"`
-	RegionCode  string    `gorm:"column:region_code;default:null"`
 	PhoneNumber string    `gorm:"column:phone_number;default:null"`
 	Nickname    string    `gorm:"column:nickname;default:null"`
 	BaseTimeColumns
@@ -45,9 +44,8 @@ type UpdateUserInfoCond struct {
 	Password    *string    `gorm:"column:password"`
 	Birthdate   *time.Time `gorm:"column:birthdate"`
 	Gender      *int       `gorm:"column:gender"`
-	Country     *string    `gorm:"column:country"`
+	CountryCode *string    `gorm:"column:country_code"`
 	Address     *string    `gorm:"column:address"`
-	RegionCode  *string    `gorm:"column:region_code"`
 	PhoneNumber *string    `gorm:"column:phone_number"`
 	Nickname    *string    `gorm:"column:nickname"`
 }

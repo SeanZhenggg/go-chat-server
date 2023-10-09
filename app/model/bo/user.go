@@ -24,9 +24,8 @@ type UserInfo struct {
 	Nickname    string
 	Birthdate   time.Time
 	Gender      int
-	Country     string
+	CountryCode string
 	Address     string
-	RegionCode  string
 	PhoneNumber string
 	CreateAt    time.Time
 	UpdateAt    time.Time
@@ -49,8 +48,7 @@ type UpdateUserInfoCond struct {
 	Nickname    *string
 	Birthdate   *time.Time
 	Gender      *int
-	Country     *string
+	CountryCode *string
 	Address     *string
-	RegionCode  *string
 	PhoneNumber *string
 }
