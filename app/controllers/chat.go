@@ -41,13 +41,6 @@ func (ctrl *ChatCtrl) Conn(ctx *gin.Context) {
 		return
 	}
 
-	// user login validation
-	//boUserInfo, err := ctrl.userSrv.ValidateUser(ctx, &bo.UserValidateCond{Token: chatQueryDto.Token})
-	//if err != nil || chatQueryDto.Account != boUserInfo.Account {
-	//	ctrl.logger.Error(xerrors.Errorf("Conn ValidateUser error : %w", err))
-	//	return
-	//}
-
 	boUserInfo, err := ctxUtil.GetUserInfo(ctx)
 	if err != nil {
 		return

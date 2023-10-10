@@ -13,7 +13,6 @@ type IUserRepo interface {
 	GetUserList(ctx context.Context) ([]*po.User, error)
 	GetUser(ctx context.Context, cond *po.GetUserCond) (*po.User, error)
 	UserRegister(ctx context.Context, cond *po.UserRegCond) error
-	UserLogin(ctx context.Context, cond *po.UserLoginCond) (*po.User, error)
 	UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoIdCond, data *po.UpdateUserInfoCond) error
 }
 
@@ -58,19 +57,6 @@ func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegCond) er
 	}
 
 	return nil
-}
-
-func (repo *userRepo) UserLogin(ctx context.Context, cond *po.UserLoginCond) (*po.User, error) {
-	user := &po.User{}
-
-	db := repo.db.Session()
-	if err := db.
-		Where(&po.User{Account: cond.Account, Password: cond.Password}).
-		First(user).Error; err != nil {
-		return nil, xerrors.Errorf("userRepo UserLogin error ! : %w", errortool.ParseDBError(err))
-	}
-
-	return user, nil
 }
 
 func (repo *userRepo) UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInfoIdCond, data *po.UpdateUserInfoCond) error {
