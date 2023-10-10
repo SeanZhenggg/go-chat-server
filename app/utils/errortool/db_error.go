@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DBGroupCode int = 3
+	DBGroupCode int = 9
 
 	// pg native error code
 	UniqueViolationCode string = pgerrcode.UniqueViolation

@@ -4,12 +4,18 @@ import (
 	"chat/app/model/bo"
 	"chat/app/service"
 	"chat/app/utils/auth"
+	ctxUtil "chat/app/utils/ctx"
 	"chat/app/utils/errortool"
 	"chat/app/utils/logger"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/xerrors"
 	"net/http"
 	"strings"
+)
+
+const (
+	HEADER_AUTHORIZATION = "Authorization"
+	ATHORIZATION_PREFIX  = "Bearer "
 )
 
 type IAuthMiddleware interface {
@@ -30,14 +36,14 @@ type AuthMiddleware struct {
 
 func (respMw *AuthMiddleware) AuthValidationHandler(ctx *gin.Context) {
 	// before request
-	tokenStr := ctx.GetHeader("Authorization")
+	tokenStr := ctx.GetHeader(HEADER_AUTHORIZATION)
 
-	token, _ := strings.CutPrefix(tokenStr, "Bearer ")
+	token, _ := strings.CutPrefix(tokenStr, ATHORIZATION_PREFIX)
 
 	userAccount, err := auth.TokenValidation(token)
 	if err != nil {
 		respMw.logger.Error(xerrors.Errorf("authMiddleware AuthValidationHandler TokenValidation error : %w", err))
-		SetResp(ctx, http.StatusUnauthorized, errortool.ReqErr.RequestTokenError)
+		SetResp(ctx, http.StatusUnauthorized, errortool.ReqErr.AuthFailedError)
 		ctx.Abort()
 		return
 	}
@@ -46,13 +52,14 @@ func (respMw *AuthMiddleware) AuthValidationHandler(ctx *gin.Context) {
 		Account: userAccount,
 	}
 
-	_, err = respMw.userSrv.GetUser(ctx, boGetUserCond)
+	userInfo, err := respMw.userSrv.GetUser(ctx, boGetUserCond)
 	if err != nil {
 		respMw.logger.Error(xerrors.Errorf("authMiddleware AuthValidationHandler TokenValidation error : %w", err))
-		SetResp(ctx, http.StatusUnauthorized, errortool.ReqErr.RequestTokenError)
+		SetResp(ctx, http.StatusUnauthorized, errortool.ReqErr.AuthFailedError)
 		ctx.Abort()
 		return
 	}
+	ctxUtil.SetUserInfo(ctx, userInfo)
 
 	ctx.Next()
 

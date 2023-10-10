@@ -13,3 +13,13 @@ func PasswordEncrypt(pwd string) (string, error) {
 
 	return string(encrypt), nil
 }
+
+func PasswordCompare(hash []byte, pwd string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(hash, []byte(pwd))
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

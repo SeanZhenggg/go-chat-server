@@ -20,5 +20,5 @@ func (app *webApp) setApiRoutes(g *gin.Engine) {
 func (app *webApp) setWsRoutes(g *gin.Engine) {
 	group := g.Group("/websocket")
 
-	group.GET("", app.Ctrl.ChatCtrl.Conn)
+	group.GET("", app.AuthMw.AuthValidationHandler, app.Ctrl.ChatCtrl.Conn)
 }

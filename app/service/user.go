@@ -16,9 +16,8 @@ type IUserSrv interface {
 	GetUserList(ctx context.Context) ([]*bo.UserInfo, error)
 	GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.UserInfo, error)
 	UserLogin(ctx context.Context, data *bo.UserLoginCond) (*bo.UserLoginResp, error)
-	UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserInfoIdCond, data *bo.UpdateUserInfoCond) error
 	UserRegister(ctx context.Context, data *bo.UserRegCond) error
-	ValidateUser(ctx context.Context, data *bo.UserValidateCond) (*bo.UserInfo, error)
+	UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserInfoIdCond, data *bo.UpdateUserInfoCond) error
 }
 
 func ProvideUserSrv(userRepo repository.IUserRepo) IUserSrv {
@@ -84,26 +83,26 @@ func (srv *userService) GetUser(ctx context.Context, cond *bo.GetUserCond) (*bo.
 	return user, nil
 }
 
-func (srv *userService) UserLogin(ctx context.Context, data *bo.UserLoginCond) (*bo.UserLoginResp, error) {
-	encrypted, err := encryptUtil.PasswordEncrypt(data.Password)
-	if err != nil {
-		return nil, xerrors.Errorf("userService UserLogin encrypt.EncryptPassword error! : %w", err)
-	}
-	poUserLogin := &po.UserLoginCond{
-		Account:  data.Account,
-		Password: encrypted,
+func (srv *userService) UserLogin(ctx context.Context, cond *bo.UserLoginCond) (*bo.UserLoginResp, error) {
+	poUserCond := &po.GetUserCond{
+		Account: cond.Account,
 	}
 
-	loggedinUser, err := srv.userRepo.UserLogin(ctx, poUserLogin)
+	poUser, err := srv.userRepo.GetUser(ctx, poUserCond)
 	if err != nil {
 		customErr, ok := errortool.ParseError(err)
 		if ok && errors.Is(customErr, errortool.DbErr.NoRow) {
-			return nil, xerrors.Errorf("userService UserLogin error! : %w", errortool.ReqErr.AccountOrPasswordError)
+			return nil, xerrors.Errorf("userService UserLogin srv.userRepo.GetUser error! : %w", errortool.UserSrvErr.AccountOrPasswordError)
 		}
-		return nil, xerrors.Errorf("userService UserLogin error! : %w", err)
+		return nil, xerrors.Errorf("userService UserLogin srv.userRepo.GetUser error! : %w", err)
 	}
 
-	token, err := auth.TokenGenerate(loggedinUser.Account)
+	isCorrect, err := encryptUtil.PasswordCompare([]byte(poUser.Password), cond.Password)
+	if err != nil || !isCorrect {
+		return nil, xerrors.Errorf("userService UserLogin encrypt.EncryptPassword error! : %w", errortool.UserSrvErr.AccountOrPasswordError)
+	}
+
+	token, err := auth.TokenGenerate(cond.Account)
 	if err != nil {
 		return nil, xerrors.Errorf("userService UserLogin TokenGenerate error! : %w", err)
 	}
@@ -129,7 +128,7 @@ func (srv *userService) UserRegister(ctx context.Context, data *bo.UserRegCond) 
 
 	if err := srv.userRepo.UserRegister(ctx, poUserReg); err != nil {
 		if errors.Is(err, errortool.DbErr.UniqueViolation) {
-			return xerrors.Errorf("userService UserRegister error! : %w", errortool.ReqErr.AccountOrNicknameDuplicateError)
+			return xerrors.Errorf("userService UserRegister error! : %w", errortool.UserSrvErr.AccountOrNicknameDuplicateError)
 		}
 		return xerrors.Errorf("userService UserRegister error! : %w", err)
 	}
@@ -137,55 +136,36 @@ func (srv *userService) UserRegister(ctx context.Context, data *bo.UserRegCond) 
 	return nil
 }
 
-func (srv *userService) ValidateUser(ctx context.Context, data *bo.UserValidateCond) (*bo.UserInfo, error) {
-	userAccount, err := auth.TokenValidation(data.Token)
-	if err != nil {
-		return nil, xerrors.Errorf("userService ValidateUser TokenValidation error! : %w", err)
-	}
-
-	poUser, err := srv.userRepo.GetUser(ctx, &po.GetUserCond{
-		Account: userAccount,
-	})
-	if err != nil {
-		return nil, xerrors.Errorf("userService ValidateUser GetUser error! : %w", err)
-	}
-
-	user := &bo.UserInfo{
-		Id:       poUser.Id,
-		Account:  poUser.Account,
-		Password: poUser.Password,
-		//Nickname: *poUser.Nickname,
-		CreateAt: poUser.CreateAt,
-		UpdateAt: poUser.UpdateAt,
-	}
-
-	return user, nil
-}
-
 func (srv *userService) UpdateUserInfo(ctx context.Context, cond *bo.UpdateUserInfoIdCond, data *bo.UpdateUserInfoCond) error {
 	if data.Password != nil && *data.Password == "" {
-		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.PasswordRequiredError)
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.UserSrvErr.PasswordRequiredError)
 	}
 
-	if data.Gender != nil && *data.Gender < 1 || *data.Gender > 3 {
-		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.GenderMismatchError)
+	if data.Gender != nil && (*data.Gender < 1 || *data.Gender > 3) {
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.UserSrvErr.GenderMismatchError)
 	}
 
 	if data.CountryCode != nil && len(*data.CountryCode) > 10 {
-		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.ReqErr.CountryCodeError)
+		return xerrors.Errorf("userService UpdateUserInfo error! : %w", errortool.UserSrvErr.CountryCodeError)
 	}
 
 	poUpdateUserInfoIdCond := &po.UpdateUserInfoIdCond{}
 	poUpdateUserInfoIdCond.Id = cond.Id
-
 	poUser := &po.UpdateUserInfoCond{
-		Password:    data.Password,
 		Nickname:    data.Nickname,
 		Birthdate:   data.Birthdate,
 		Gender:      data.Gender,
 		CountryCode: data.CountryCode,
 		Address:     data.Address,
 		PhoneNumber: data.PhoneNumber,
+	}
+
+	if data.Password != nil {
+		encrypted, err := encryptUtil.PasswordEncrypt(*data.Password)
+		if err != nil {
+			return xerrors.Errorf("userService UpdateUserInfo encrypt.EncryptPassword error! : %w", err)
+		}
+		poUser.Password = &encrypted
 	}
 
 	if err := srv.userRepo.UpdateUserInfo(ctx, poUpdateUserInfoIdCond, poUser); err != nil {
