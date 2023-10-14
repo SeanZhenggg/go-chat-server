@@ -1,10 +1,14 @@
 package errortool
 
+import (
+	"github.com/SeanZhenggg/go-utils/errortool"
+)
+
 const (
 	ReqGroupCode int = 2
 )
 
-func ProvideReqError(groups IGroupRepo, codes ICodeRepo) interface{} {
+func ProvideReqError(groups errortool.IGroupRepo, codes errortool.ICodeRepo) interface{} {
 	group := Define.GenGroup(ReqGroupCode)
 
 	return &reqError{

@@ -1,10 +1,14 @@
 package errortool
 
+import (
+	"github.com/SeanZhenggg/go-utils/errortool"
+)
+
 const (
 	UserSrvGroupCode int = 3
 )
 
-func ProvideUserSrvError(groups IGroupRepo, codes ICodeRepo) interface{} {
+func ProvideUserSrvError(groups errortool.IGroupRepo, codes errortool.ICodeRepo) interface{} {
 	group := Define.GenGroup(UserSrvGroupCode)
 
 	return &userSrvError{

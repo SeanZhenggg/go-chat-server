@@ -1,7 +1,11 @@
 package errortool
 
+import (
+	"github.com/SeanZhenggg/go-utils/errortool"
+)
+
 var (
-	Define     = ProvideDefine()
+	Define     = errortool.ProvideDefine()
 	CommonErr  = Define.Plugin(ProvideCommonError).(*commonError)
 	ReqErr     = Define.Plugin(ProvideReqError).(*reqError)
 	UserSrvErr = Define.Plugin(ProvideUserSrvError).(*userSrvError)

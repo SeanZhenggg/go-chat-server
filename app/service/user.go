@@ -9,6 +9,7 @@ import (
 	"chat/app/utils/errortool"
 	"context"
 	"errors"
+	errorToolUtil "github.com/SeanZhenggg/go-utils/errortool"
 	"golang.org/x/xerrors"
 )
 
@@ -90,7 +91,7 @@ func (srv *userService) UserLogin(ctx context.Context, cond *bo.UserLoginCond) (
 
 	poUser, err := srv.userRepo.GetUser(ctx, poUserCond)
 	if err != nil {
-		customErr, ok := errortool.ParseError(err)
+		customErr, ok := errorToolUtil.ParseError(err)
 		if ok && errors.Is(customErr, errortool.DbErr.NoRow) {
 			return nil, xerrors.Errorf("userService UserLogin srv.userRepo.GetUser error! : %w", errortool.UserSrvErr.AccountOrPasswordError)
 		}

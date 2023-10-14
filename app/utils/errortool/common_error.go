@@ -1,10 +1,12 @@
 package errortool
 
+import "github.com/SeanZhenggg/go-utils/errortool"
+
 const (
 	CommonGroupCode int = 1
 )
 
-func ProvideCommonError(groups IGroupRepo, codes ICodeRepo) interface{} {
+func ProvideCommonError(groups errortool.IGroupRepo, codes errortool.ICodeRepo) interface{} {
 	group := Define.GenGroup(CommonGroupCode)
 
 	return &commonError{

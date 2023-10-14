@@ -3,6 +3,7 @@ package middleware
 import (
 	"chat/app/utils/errortool"
 	"errors"
+	errorToolUtil "github.com/SeanZhenggg/go-utils/errortool"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,11 +42,11 @@ func (respMw *ResponseMiddleware) generateStandardResponse(ctx *gin.Context) res
 	if status >= http.StatusBadRequest {
 		var err error
 		if errors.As(data.(error), &err) {
-			if parsed, ok := errortool.ParseError(err); ok {
+			if parsed, ok := errorToolUtil.ParseError(err); ok {
 				code = parsed.GetCode()
 				message = parsed.GetMessage()
 			} else {
-				err, _ := errortool.ParseError(errortool.CommonErr.UnknownError)
+				err, _ := errorToolUtil.ParseError(errortool.CommonErr.UnknownError)
 				code = err.GetCode()
 				message = err.GetMessage()
 			}
