@@ -3,7 +3,7 @@ module chat
 go 1.21.1
 
 require (
-	github.com/SeanZhenggg/go-utils v0.0.0-20231014031351-9d239ab43210
+	github.com/SeanZhenggg/go-utils v0.0.0-20231018155222-e4cdf442986a
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/gorilla/websocket v1.5.0

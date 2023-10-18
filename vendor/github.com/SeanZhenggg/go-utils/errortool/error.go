@@ -8,18 +8,18 @@ import (
 func ParseError(err error) (*CustomError, bool) {
 	newError := err
 	for {
-		if tmp := errors.Unwrap(newError); tmp != nil {
-			newError = tmp
-		} else {
+		tmp := errors.Unwrap(newError)
+		if tmp != nil {
 			break
 		}
+		newError = tmp
 	}
 
 	if parsed, ok := newError.(*CustomError); ok {
 		return parsed, true
-	} else {
-		return nil, false
 	}
+
+	return nil, false
 }
 
 type CustomError struct {

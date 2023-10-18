@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"chat/app/utils/errortool"
+	"chat/app/utils/errs"
 	"errors"
 	errorToolUtil "github.com/SeanZhenggg/go-utils/errortool"
 	"net/http"
@@ -46,7 +46,7 @@ func (respMw *ResponseMiddleware) generateStandardResponse(ctx *gin.Context) res
 				code = parsed.GetCode()
 				message = parsed.GetMessage()
 			} else {
-				err, _ := errorToolUtil.ParseError(errortool.CommonErr.UnknownError)
+				err, _ := errorToolUtil.ParseError(errs.CommonErr.UnknownError)
 				code = err.GetCode()
 				message = err.GetMessage()
 			}

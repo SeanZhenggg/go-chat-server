@@ -2,7 +2,7 @@ package ctx
 
 import (
 	"chat/app/model/bo"
-	"chat/app/utils/errortool"
+	"chat/app/utils/errs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,5 +26,5 @@ func GetUserInfo(ctx *gin.Context) (*bo.UserInfo, error) {
 		}
 	}
 
-	return nil, errortool.ReqErr.AuthFailedError
+	return nil, errs.ReqErr.AuthFailedError
 }

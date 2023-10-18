@@ -7,12 +7,6 @@ type IGroupRepo interface {
 	Get(code int) int
 }
 
-func ProvideGroupRepo() IGroupRepo {
-	return &groupRepo{
-		store: make(map[int]struct{}, 256),
-	}
-}
-
 type groupRepo struct {
 	store map[int]struct{}
 }

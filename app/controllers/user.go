@@ -4,7 +4,7 @@ import (
 	"chat/app/model/bo"
 	"chat/app/model/dto"
 	"chat/app/service"
-	"chat/app/utils/errortool"
+	"chat/app/utils/errs"
 	"chat/app/utils/logger"
 	"golang.org/x/xerrors"
 	"net/http"
@@ -71,7 +71,7 @@ func (ctrl *UserCtrl) GetUserList(ctx *gin.Context) {
 func (ctrl *UserCtrl) GetUser(ctx *gin.Context) {
 	dtoUserCond := &dto.GetUserCond{}
 	if err := ctx.BindUri(dtoUserCond); err != nil {
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 	dtoUserLogin := &dto.UserLoginCond{}
 
 	if err := ctx.BindJSON(dtoUserLogin); err != nil {
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (ctrl *UserCtrl) PostUserLogin(ctx *gin.Context) {
 func (ctrl *UserCtrl) PostUserRegister(ctx *gin.Context) {
 	dtoUserRegData := &dto.UserRegCond{}
 	if err := ctx.ShouldBindJSON(dtoUserRegData); err != nil {
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 		return
 	}
 
@@ -158,14 +158,14 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 	err := ctx.BindUri(dtoUpdateUserIdCond)
 	if err != nil {
 		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo ctx.BindUri error: %w", err))
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 		return
 	}
 
 	intId, err := strconv.ParseUint(dtoUpdateUserIdCond.Id, 10, 64)
 	if err != nil || intId == 0 {
 		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo strconv.ParseUint error: %w", err))
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 		return
 	}
 	boUpdateUserInfoIdCond := &bo.UpdateUserInfoIdCond{
@@ -175,7 +175,7 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 	dtoUpdateUserInfoCond := &dto.UpdateUserInfoCond{}
 	if err := ctx.ShouldBindJSON(dtoUpdateUserInfoCond); err != nil {
 		ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo ctx.ShouldBindJSON error: %w", err))
-		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+		ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 		return
 	}
 
@@ -184,7 +184,7 @@ func (ctrl *UserCtrl) PostUpdateUserInfo(ctx *gin.Context) {
 		bd, err := time.Parse(time.DateOnly, *dtoUpdateUserInfoCond.Birthdate)
 		if err != nil {
 			ctrl.logger.Error(xerrors.Errorf("userController PostUpdateUserInfo time.Parse error: %w", err))
-			ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errortool.CommonErr.RequestParamError)
+			ctrl.SetResponse.SetStandardResponse(ctx, http.StatusBadRequest, errs.CommonErr.RequestParamError)
 			return
 		}
 

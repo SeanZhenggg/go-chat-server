@@ -1,4 +1,4 @@
-# github.com/SeanZhenggg/go-utils v0.0.0-20231014031351-9d239ab43210
+# github.com/SeanZhenggg/go-utils v0.0.0-20231018155222-e4cdf442986a
 ## explicit; go 1.21.1
 github.com/SeanZhenggg/go-utils/errortool
 # github.com/bytedance/sonic v1.9.1

@@ -1,8 +1,7 @@
-package errortool
+package errs
 
 import (
 	"errors"
-	"github.com/SeanZhenggg/go-utils/errortool"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
@@ -15,8 +14,8 @@ const (
 	UniqueViolationCode string = pgerrcode.UniqueViolation
 )
 
-func ProvideDBError(groups errortool.IGroupRepo, codes errortool.ICodeRepo) interface{} {
-	group := Define.GenGroup(DBGroupCode)
+func ProvideDBError() *dbError {
+	group := Define.GenErrorGroup(DBGroupCode)
 
 	return &dbError{
 		NoRow:           group.GenError(1, "No Rows Returned"),

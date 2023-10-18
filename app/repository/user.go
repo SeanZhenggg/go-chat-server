@@ -3,7 +3,7 @@ package repository
 import (
 	"chat/app/database"
 	"chat/app/model/po"
-	"chat/app/utils/errortool"
+	"chat/app/utils/errs"
 	"context"
 
 	"golang.org/x/xerrors"
@@ -29,7 +29,7 @@ func (repo *userRepo) GetUserList(ctx context.Context) ([]*po.User, error) {
 
 	db := repo.db.Session()
 	if err := db.Model(&po.User{}).Find(&userList).Error; err != nil {
-		return nil, xerrors.Errorf("userRepo GetUserList error ! : %w", errortool.ParseDBError(err))
+		return nil, xerrors.Errorf("userRepo GetUserList error ! : %w", errs.ParseDBError(err))
 	}
 
 	return userList, nil
@@ -40,7 +40,7 @@ func (repo *userRepo) GetUser(ctx context.Context, cond *po.GetUserCond) (*po.Us
 
 	db := repo.db.Session()
 	if err := db.Where("account = ?", cond.Account).First(user).Error; err != nil {
-		return nil, xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
+		return nil, xerrors.Errorf("userRepo GetUser error ! : %w", errs.ParseDBError(err))
 	}
 
 	return user, nil
@@ -53,7 +53,7 @@ func (repo *userRepo) UserRegister(ctx context.Context, cond *po.UserRegCond) er
 		Password: cond.Password,
 		Nickname: cond.Nickname,
 	}).Error; err != nil {
-		return xerrors.Errorf("userRepo GetUser error ! : %w", errortool.ParseDBError(err))
+		return xerrors.Errorf("userRepo GetUser error ! : %w", errs.ParseDBError(err))
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (repo *userRepo) UpdateUserInfo(ctx context.Context, cond *po.UpdateUserInf
 		Model(&po.User{}).
 		Where("id = ?", cond.Id).
 		Updates(data).Error; err != nil {
-		return xerrors.Errorf("userRepo UpdateUserInfo error ! : %w", errortool.ParseDBError(err))
+		return xerrors.Errorf("userRepo UpdateUserInfo error ! : %w", errs.ParseDBError(err))
 	}
 
 	return nil

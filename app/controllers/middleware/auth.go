@@ -5,7 +5,7 @@ import (
 	"chat/app/service"
 	"chat/app/utils/auth"
 	ctxUtil "chat/app/utils/ctx"
-	"chat/app/utils/errortool"
+	"chat/app/utils/errs"
 	"chat/app/utils/logger"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/xerrors"
@@ -43,7 +43,7 @@ func (respMw *AuthMiddleware) AuthValidationHandler(ctx *gin.Context) {
 	userAccount, err := auth.TokenValidation(token)
 	if err != nil {
 		respMw.logger.Error(xerrors.Errorf("authMiddleware AuthValidationHandler TokenValidation error : %w", err))
-		SetResp(ctx, http.StatusUnauthorized, errortool.ReqErr.AuthFailedError)
+		SetResp(ctx, http.StatusUnauthorized, errs.ReqErr.AuthFailedError)
 		ctx.Abort()
 		return
 	}
@@ -55,7 +55,7 @@ func (respMw *AuthMiddleware) AuthValidationHandler(ctx *gin.Context) {
 	userInfo, err := respMw.userSrv.GetUser(ctx, boGetUserCond)
 	if err != nil {
 		respMw.logger.Error(xerrors.Errorf("authMiddleware AuthValidationHandler TokenValidation error : %w", err))
-		SetResp(ctx, http.StatusUnauthorized, errortool.ReqErr.AuthFailedError)
+		SetResp(ctx, http.StatusUnauthorized, errs.ReqErr.AuthFailedError)
 		ctx.Abort()
 		return
 	}

@@ -1,15 +1,11 @@
-package errortool
-
-import (
-	"github.com/SeanZhenggg/go-utils/errortool"
-)
+package errs
 
 const (
 	UserSrvGroupCode int = 3
 )
 
-func ProvideUserSrvError(groups errortool.IGroupRepo, codes errortool.ICodeRepo) interface{} {
-	group := Define.GenGroup(UserSrvGroupCode)
+func ProvideUserSrvError() *userSrvError {
+	group := Define.GenErrorGroup(UserSrvGroupCode)
 
 	return &userSrvError{
 		AccountOrPasswordError:          group.GenError(1, "帳號或密碼錯誤"),

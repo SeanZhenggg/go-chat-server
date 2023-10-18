@@ -7,12 +7,6 @@ type ICodeRepo interface {
 	Get(code int) (*CustomError, bool)
 }
 
-func ProvideCodeRepo() ICodeRepo {
-	return &codeRepo{
-		store: make(map[int]*CustomError, 256),
-	}
-}
-
 type codeRepo struct {
 	store map[int]*CustomError
 }

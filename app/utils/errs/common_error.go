@@ -1,13 +1,11 @@
-package errortool
-
-import "github.com/SeanZhenggg/go-utils/errortool"
+package errs
 
 const (
 	CommonGroupCode int = 1
 )
 
-func ProvideCommonError(groups errortool.IGroupRepo, codes errortool.ICodeRepo) interface{} {
-	group := Define.GenGroup(CommonGroupCode)
+func ProvideCommonError() *commonError {
+	group := Define.GenErrorGroup(CommonGroupCode)
 
 	return &commonError{
 		UnknownError:      group.GenError(1, "未知錯誤"),
